@@ -313,56 +313,2377 @@ body {
 </style>
 </head>
 <body>
-  <div class="vending-machine">
-    <!-- Header -->
-    <header>
-      <div class="logo-container">
-        <img src="logo.png" alt="Company Logo" class="logo-image">
-      </div>
-      <div class="network-status" id="network-status">
-        Network: Not Connected
-      </div>
-      <div class="wallet-status" id="wallet-status">
-        <button class="btn btn-primary" id="connect-wallet-btn">Connect Wallet</button>
-      </div>
-    </header>
-
-    <!-- Main Content -->
-    <main>
-      <!-- Product Listing -->
-      <section class="product-listing" id="product-listing">
-        <!-- Products will be dynamically loaded here -->
-      </section>
-    </main>
-
-    <!-- Footer -->
-    <footer>
-      <p>&copy; 2023 CiFi Vending Machine</p>
-    </footer>
-  </div>
-
-  <!-- Purchase Modal -->
-  <div id="purchase-modal" class="modal">
-    <div class="modal-content">
-      <h2>Purchase Product</h2>
-      <div id="purchase-product-details">
-        <!-- Product details will be loaded here -->
-      </div>
-      <form id="purchase-form">
-        <div class="form-group">
-          <label>Amount</label>
-          <input type="number" name="amount" min="1" value="1" required>
+    <div class="container">
+        <div class="sidebar">
+            <div id="wallet-status">Wallet not connected</div>
+            <button class="network-btn" data-network="xdc">XDC Network</button>
+            <button class="network-btn" data-network="avax">Avalanche</button>
+            <button class="network-btn" data-network="polygon">Polygon</button>
+            <div class="logo-container">
+                <img src="https://ipfs.io/ipfs/QmQX4HvtqdYVuJHm17JTyGkK1ttFitg4oAhPzXdy6psm1T" alt="Logo" class="logo">
+            </div>
         </div>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">Confirm Purchase</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('purchase-modal')">Cancel</button>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>CIFI Cross-Chain Vending Machine</h1>
+                <p>Purchase tokens across multiple networks seamlessly. Connect your wallet by selecting a network from the sidebar.</p>
+            </div>
+
+            <div id="products-grid" class="products-grid">
+                <!-- Products will be dynamically populated here -->
+            </div>
+
+            <div class="toast-container" id="toast-container">
+                <!-- Notifications will be shown here -->
+            </div>
         </div>
-      </form>
     </div>
-  </div>
 
-  <script>
-    const CONTRACT_ABI = [
+    <script>
+        // Network configurations
+        const networks = {
+            xdc: {
+                name: 'XDC Mainnet',
+                chainId: '0x32',
+                rpcUrl: 'https://rpc.xinfin.network',
+                symbol: 'XDC',
+                explorer: 'https://explorer.xinfin.network',
+                contractAddress: '0x0F53b47424FaFc8501ADF7f40E9920aC8DA925D7',
+                vendingMachineContract: null,
+                erc20Abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "tokenName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "tokenSymbol",
+				"type": "string"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldBalance",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newBalance",
+				"type": "uint256"
+			}
+		],
+		"name": "BalanceChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "triggeredBy",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "EmergencyShutdown",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "PermissionUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"components": [
+					{
+						"internalType": "bool",
+						"name": "canTransfer",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "canSnapshot",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "canModifyPermissions",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "lastUpdated",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "deregistrationTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "lastSnapshotTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "snapshotCount",
+						"type": "uint256"
+					}
+				],
+				"indexed": true,
+				"internalType": "struct wCIFI.ProtocolPermissions",
+				"name": "permissions",
+				"type": "tuple"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "effectiveTime",
+				"type": "uint256"
+			}
+		],
+		"name": "ProtocolStatusChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldLimit",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newLimit",
+				"type": "uint256"
+			}
+		],
+		"name": "RateLimitUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "attacker",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "functionName",
+				"type": "string"
+			}
+		],
+		"name": "ReentrancyAttempt",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "requester",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "batchSize",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "success",
+				"type": "bool"
+			}
+		],
+		"name": "SnapshotAttempt",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "blockNumber",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "SnapshotCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "SnapshotPruned",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			}
+		],
+		"name": "balanceOfAt",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "addresses",
+				"type": "address[]"
+			}
+		],
+		"name": "createSnapshot",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "emergencyShutdown",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "nonce",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deadline",
+				"type": "uint256"
+			}
+		],
+		"name": "getPermitHash",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "getProtocolPermissions",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "initiateProtocolDeregistration",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "isProtocolActive",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "nonces",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paused",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deadline",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "v",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "r",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "s",
+				"type": "bytes32"
+			}
+		],
+		"name": "permit",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "registerProtocol",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "updateProtocolPermissions",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]
+            },
+            avax: {
+                name: 'Avalanche C-Chain',
+                chainId: '0xA86A',
+                rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+                symbol: 'AVAX',
+                explorer: 'https://snowtrace.io',
+                contractAddress: '0xe90bCeef5AC65a36199Cfa29552FBCF36BE531A0',
+                vendingMachineContract: null,
+                erc20Abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "tokenName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "tokenSymbol",
+				"type": "string"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldBalance",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newBalance",
+				"type": "uint256"
+			}
+		],
+		"name": "BalanceChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "triggeredBy",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "EmergencyShutdown",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "PermissionUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"components": [
+					{
+						"internalType": "bool",
+						"name": "canTransfer",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "canSnapshot",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "canModifyPermissions",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "lastUpdated",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "deregistrationTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "lastSnapshotTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "snapshotCount",
+						"type": "uint256"
+					}
+				],
+				"indexed": true,
+				"internalType": "struct wCIFI.ProtocolPermissions",
+				"name": "permissions",
+				"type": "tuple"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "effectiveTime",
+				"type": "uint256"
+			}
+		],
+		"name": "ProtocolStatusChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldLimit",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newLimit",
+				"type": "uint256"
+			}
+		],
+		"name": "RateLimitUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "attacker",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "functionName",
+				"type": "string"
+			}
+		],
+		"name": "ReentrancyAttempt",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "requester",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "batchSize",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "success",
+				"type": "bool"
+			}
+		],
+		"name": "SnapshotAttempt",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "blockNumber",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "SnapshotCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "SnapshotPruned",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			}
+		],
+		"name": "balanceOfAt",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "addresses",
+				"type": "address[]"
+			}
+		],
+		"name": "createSnapshot",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "emergencyShutdown",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "nonce",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deadline",
+				"type": "uint256"
+			}
+		],
+		"name": "getPermitHash",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "getProtocolPermissions",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "initiateProtocolDeregistration",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "isProtocolActive",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "nonces",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paused",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deadline",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "v",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "r",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "s",
+				"type": "bytes32"
+			}
+		],
+		"name": "permit",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "registerProtocol",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "updateProtocolPermissions",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]
+            },
+            polygon: {
+                name: 'Polygon Mainnet',
+                chainId: '0x89',
+                rpcUrl: 'https://polygon-rpc.com',
+                symbol: 'POL',
+                explorer: 'https://polygonscan.com',
+                contractAddress: '0xd3A42e2aDEc479dAd1C08F76a635da9e6bc888f5',
+                vendingMachineContract: null,
+                erc20Abi: [
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "tokenName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "tokenSymbol",
+				"type": "string"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Approval",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldBalance",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newBalance",
+				"type": "uint256"
+			}
+		],
+		"name": "BalanceChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "triggeredBy",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "EmergencyShutdown",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "PermissionUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"components": [
+					{
+						"internalType": "bool",
+						"name": "canTransfer",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "canSnapshot",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "canModifyPermissions",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "lastUpdated",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "deregistrationTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "lastSnapshotTime",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "snapshotCount",
+						"type": "uint256"
+					}
+				],
+				"indexed": true,
+				"internalType": "struct wCIFI.ProtocolPermissions",
+				"name": "permissions",
+				"type": "tuple"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "effectiveTime",
+				"type": "uint256"
+			}
+		],
+		"name": "ProtocolStatusChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "oldLimit",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newLimit",
+				"type": "uint256"
+			}
+		],
+		"name": "RateLimitUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "attacker",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "functionName",
+				"type": "string"
+			}
+		],
+		"name": "ReentrancyAttempt",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "requester",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "batchSize",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "success",
+				"type": "bool"
+			}
+		],
+		"name": "SnapshotAttempt",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "blockNumber",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "SnapshotCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "SnapshotPruned",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "Transfer",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			}
+		],
+		"name": "allowance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "snapshotId",
+				"type": "bytes32"
+			}
+		],
+		"name": "balanceOfAt",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "addresses",
+				"type": "address[]"
+			}
+		],
+		"name": "createSnapshot",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "emergencyShutdown",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "nonce",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deadline",
+				"type": "uint256"
+			}
+		],
+		"name": "getPermitHash",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "getProtocolPermissions",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "initiateProtocolDeregistration",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			}
+		],
+		"name": "isProtocolActive",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "nonces",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paused",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "spender",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "deadline",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint8",
+				"name": "v",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "r",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "s",
+				"type": "bytes32"
+			}
+		],
+		"name": "permit",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "registerProtocol",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "symbol",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transfer",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "transferFrom",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "protocol",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "canTransfer",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canSnapshot",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "canModifyPermissions",
+				"type": "bool"
+			}
+		],
+		"name": "updateProtocolPermissions",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]
+            }
+        };
+
+        // Contract ABIs
+        const vendingMachineABI = [
 	{
 		"inputs": [
 			{
@@ -1146,18 +3467,24 @@ body {
 		"type": "function"
 	}
 ];
-    const ERC20_ABI = [
+
+        const standardERC20ABI = [
 	{
 		"inputs": [
 			{
 				"internalType": "string",
-				"name": "tokenName",
+				"name": "_name",
 				"type": "string"
 			},
 			{
 				"internalType": "string",
-				"name": "tokenSymbol",
+				"name": "_symbol",
 				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_tokenSupply",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -1192,25 +3519,19 @@ body {
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
+				"indexed": false,
 				"internalType": "address",
-				"name": "account",
+				"name": "",
 				"type": "address"
 			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "oldBalance",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "newBalance",
+				"name": "",
 				"type": "uint256"
 			}
 		],
-		"name": "BalanceChanged",
+		"name": "Mint",
 		"type": "event"
 	},
 	{
@@ -1219,17 +3540,11 @@ body {
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "triggeredBy",
+				"name": "account",
 				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
 			}
 		],
-		"name": "EmergencyShutdown",
+		"name": "MinterAdded",
 		"type": "event"
 	},
 	{
@@ -1238,198 +3553,11 @@ body {
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "protocol",
+				"name": "account",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "canTransfer",
-				"type": "bool"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "canSnapshot",
-				"type": "bool"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "canModifyPermissions",
-				"type": "bool"
 			}
 		],
-		"name": "PermissionUpdated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "protocol",
-				"type": "address"
-			},
-			{
-				"components": [
-					{
-						"internalType": "bool",
-						"name": "canTransfer",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "canSnapshot",
-						"type": "bool"
-					},
-					{
-						"internalType": "bool",
-						"name": "canModifyPermissions",
-						"type": "bool"
-					},
-					{
-						"internalType": "uint256",
-						"name": "lastUpdated",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "deregistrationTime",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "lastSnapshotTime",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "snapshotCount",
-						"type": "uint256"
-					}
-				],
-				"indexed": true,
-				"internalType": "struct wCIFI.ProtocolPermissions",
-				"name": "permissions",
-				"type": "tuple"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "effectiveTime",
-				"type": "uint256"
-			}
-		],
-		"name": "ProtocolStatusChanged",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "oldLimit",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "newLimit",
-				"type": "uint256"
-			}
-		],
-		"name": "RateLimitUpdated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "attacker",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "functionName",
-				"type": "string"
-			}
-		],
-		"name": "ReentrancyAttempt",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "requester",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "batchSize",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "success",
-				"type": "bool"
-			}
-		],
-		"name": "SnapshotAttempt",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "bytes32",
-				"name": "snapshotId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "blockNumber",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			}
-		],
-		"name": "SnapshotCreated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "bytes32",
-				"name": "snapshotId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			}
-		],
-		"name": "SnapshotPruned",
+		"name": "MinterRemoved",
 		"type": "event"
 	},
 	{
@@ -1456,6 +3584,19 @@ body {
 		],
 		"name": "Transfer",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "addMinter",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -1490,7 +3631,7 @@ body {
 			},
 			{
 				"internalType": "uint256",
-				"name": "value",
+				"name": "amount",
 				"type": "uint256"
 			}
 		],
@@ -1528,42 +3669,17 @@ body {
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "account",
+				"name": "_account",
 				"type": "address"
 			},
 			{
-				"internalType": "bytes32",
-				"name": "snapshotId",
-				"type": "bytes32"
-			}
-		],
-		"name": "balanceOfAt",
-		"outputs": [
-			{
 				"internalType": "uint256",
-				"name": "",
+				"name": "_amount",
 				"type": "uint256"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address[]",
-				"name": "addresses",
-				"type": "address[]"
-			}
-		],
-		"name": "createSnapshot",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
+		"name": "burnCIFIToken",
+		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
@@ -1581,19 +3697,7 @@ body {
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "emergencyShutdown",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
 			{
 				"internalType": "address",
 				"name": "spender",
@@ -1601,70 +3705,18 @@ body {
 			},
 			{
 				"internalType": "uint256",
-				"name": "value",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "nonce",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "deadline",
+				"name": "subtractedValue",
 				"type": "uint256"
 			}
 		],
-		"name": "getPermitHash",
-		"outputs": [
-			{
-				"internalType": "bytes32",
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "protocol",
-				"type": "address"
-			}
-		],
-		"name": "getProtocolPermissions",
+		"name": "decreaseAllowance",
 		"outputs": [
 			{
 				"internalType": "bool",
 				"name": "",
 				"type": "bool"
-			},
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			},
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
 			}
 		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "protocol",
-				"type": "address"
-			}
-		],
-		"name": "initiateProtocolDeregistration",
-		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
@@ -1672,24 +3724,61 @@ body {
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "protocol",
+				"name": "spender",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "addedValue",
+				"type": "uint256"
 			}
 		],
-		"name": "isProtocolActive",
+		"name": "increaseAllowance",
 		"outputs": [
 			{
 				"internalType": "bool",
 				"name": "",
 				"type": "bool"
-			},
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "isMinter",
+		"outputs": [
+			{
+				"internalType": "bool",
 				"name": "",
-				"type": "uint256"
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_account",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "mintCIFIToken",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -1706,104 +3795,8 @@ body {
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			}
-		],
-		"name": "nonces",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [],
-		"name": "paused",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "spender",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "value",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "deadline",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint8",
-				"name": "v",
-				"type": "uint8"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "r",
-				"type": "bytes32"
-			},
-			{
-				"internalType": "bytes32",
-				"name": "s",
-				"type": "bytes32"
-			}
-		],
-		"name": "permit",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "protocol",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "canTransfer",
-				"type": "bool"
-			},
-			{
-				"internalType": "bool",
-				"name": "canSnapshot",
-				"type": "bool"
-			},
-			{
-				"internalType": "bool",
-				"name": "canModifyPermissions",
-				"type": "bool"
-			}
-		],
-		"name": "registerProtocol",
+		"name": "renounceMinter",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -1816,6 +3809,19 @@ body {
 				"internalType": "string",
 				"name": "",
 				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "tokenSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -1843,7 +3849,7 @@ body {
 			},
 			{
 				"internalType": "uint256",
-				"name": "value",
+				"name": "amount",
 				"type": "uint256"
 			}
 		],
@@ -1872,7 +3878,7 @@ body {
 			},
 			{
 				"internalType": "uint256",
-				"name": "value",
+				"name": "amount",
 				"type": "uint256"
 			}
 		],
@@ -1886,334 +3892,429 @@ body {
 		],
 		"stateMutability": "nonpayable",
 		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "protocol",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "canTransfer",
-				"type": "bool"
-			},
-			{
-				"internalType": "bool",
-				"name": "canSnapshot",
-				"type": "bool"
-			},
-			{
-				"internalType": "bool",
-				"name": "canModifyPermissions",
-				"type": "bool"
-			}
-		],
-		"name": "updateProtocolPermissions",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	}
 ];
 
-    let web3;
-    let contract;
-    let currentAccount;
-    let currentChainId;
-    let products = [];
+        let currentNetwork = null;
+        let web3;
+        let accounts = [];
 
-    const NETWORKS = {
-      50: {
-        name: 'XDC Mainnet',
-        rpcUrl: 'https://rpc.xinfin.network',
-        contractAddress: '0xf2CC1c24d2b1E173020ab9b846e8bfFD78f6976b',
-        symbol: 'XDC',
-        explorer: 'https://explorer.xinfin.network',
-        chainParams: {
-          chainId: '0x32',
-          chainName: 'XDC Mainnet',
-          nativeCurrency: { name: 'XDC', symbol: 'XDC', decimals: 18 },
-          rpcUrls: ['https://rpc.xinfin.network'],
-          blockExplorerUrls: ['https://explorer.xinfin.network']
-        }
-      },
-      43114: {
-        name: 'Avalanche C-Chain',
-        rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
-        contractAddress: '0xf2CC1c24d2b1E173020ab9b846e8bfFD78f6976b',
-        symbol: 'AVAX',
-        explorer: 'https://snowtrace.io',
-        chainParams: {
-          chainId: '0xA86A',
-          chainName: 'Avalanche C-Chain',
-          nativeCurrency: { name: 'AVAX', symbol: 'AVAX', decimals: 18 },
-          rpcUrls: ['https://api.avax.network/ext/bc/C/rpc'],
-          blockExplorerUrls: ['https://snowtrace.io']
-        }
-      },
-      137: {
-        name: 'Polygon Mainnet',
-        rpcUrl: 'https://polygon-rpc.com',
-        contractAddress: '0xf2CC1c24d2b1E173020ab9b846e8bfFD78f6976b',
-        symbol: 'POL',
-        explorer: 'https://polygonscan.com',
-        chainParams: {
-          chainId: '0x89',
-          chainName: 'Polygon Mainnet',
-          nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
-          rpcUrls: ['https://polygon-rpc.com'],
-          blockExplorerUrls: ['https://polygonscan.com']
-        }
-      }
-    };
+        // Initialize Web3 and contract instances
+        async function initializeWeb3(networkKey) {
+            const network = networks[networkKey];
 
-    // Initialize Web3 and connect to the wallet
-    async function connectWallet() {
-      if (typeof window.ethereum !== 'undefined') {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          currentAccount = accounts[0];
+            if (typeof window.ethereum === 'undefined') {
+                throw new Error('Please install MetaMask!');
+            }
 
-          web3 = new Web3(window.ethereum);
+            web3 = new Web3(window.ethereum);
 
-          const chainId = await web3.eth.getChainId();
-          await handleNetworkChange(chainId);
+            // Initialize the vending machine contract instance
+            network.vendingMachineContract = new web3.eth.Contract(
+                vendingMachineABI,
+                network.contractAddress
+            );
 
-          window.ethereum.on('accountsChanged', handleAccountChange);
-          window.ethereum.on('chainChanged', handleNetworkChange);
-
-          document.getElementById('wallet-status').innerHTML = 
-            `<span>Connected: ${currentAccount.substr(0,6)}...${currentAccount.substr(-4)}</span>`;
-
-          showNotification('success', 'Connected', 'Successfully connected to wallet');
-        } catch (error) {
-          console.error('Error connecting to wallet:', error);
-          showNotification('error', 'Connection Failed', formatError(error));
-        }
-      } else {
-        showNotification('error', 'Web3 Not Found', 'Please install MetaMask');
-      }
-    }
-
-    document.getElementById('connect-wallet-btn').addEventListener('click', connectWallet);
-
-    async function handleAccountChange(accounts) {
-      if (accounts.length === 0) {
-        currentAccount = null;
-        document.getElementById('wallet-status').innerHTML = 
-          `<button class="btn btn-primary" id="connect-wallet-btn">Connect Wallet</button>`;
-        document.getElementById('connect-wallet-btn').addEventListener('click', connectWallet);
-        showNotification('warning', 'Disconnected', 'Please connect your wallet');
-      } else {
-        currentAccount = accounts[0];
-        document.getElementById('wallet-status').innerHTML = 
-          `<span>Connected: ${currentAccount.substr(0,6)}...${currentAccount.substr(-4)}</span>`;
-        await loadProducts();
-      }
-    }
-
-    async function handleNetworkChange(chainId) {
-      currentChainId = parseInt(chainId, 16);
-      const networkConfig = NETWORKS[currentChainId];
-
-      if (!networkConfig) {
-        showNotification('error', 'Network Error', 'Unsupported network. Please switch to a supported network.');
-        return;
-      }
-
-      document.getElementById('network-status').textContent = `Network: ${networkConfig.name}`;
-      contract = new web3.eth.Contract(CONTRACT_ABI, networkConfig.contractAddress);
-
-      await loadProducts();
-    }
-
-    async function loadProducts() {
-      try {
-        const productIds = await contract.methods.getAllProductIds().call();
-        products = [];
-
-        for (let i = 0; i < productIds.length; i++) {
-          const productId = productIds[i];
-          const [basicInfo, fullDetails] = await Promise.all([
-            contract.methods.getProductBasicInfo(productId).call(),
-            contract.methods.getFullProductDetails(productId).call()
-          ]);
-
-          if (basicInfo.isActive && !basicInfo.emergencyLocked) {
-            const product = {
-              id: productId,
-              name: basicInfo.name,
-              ipfsCID: basicInfo.ipfsCID,
-              productContractAddress: basicInfo.productContract,
-              price: fullDetails.price,
-              paymentToken: fullDetails.paymentToken,
-              availableSupply: fullDetails.availableSupply,
-            };
-            products.push(product);
-          }
+            return network;
         }
 
-        renderProducts();
-      } catch (error) {
-        showNotification('error', 'Loading Error', formatError(error));
-      }
-    }
+        // Connect wallet and switch network
+        async function connectWallet(networkKey) {
+            try {
+                const network = await initializeWeb3(networkKey);
 
-    function renderProducts() {
-      const productListing = document.getElementById('product-listing');
-      productListing.innerHTML = '';
+                // Request account access
+                accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-      if (products.length === 0) {
-        productListing.innerHTML = '<p>No products available at the moment.</p>';
-        return;
-      }
+                // Switch network
+                await switchNetwork(networkKey);
 
-      products.forEach(product => {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card';
+                // Update UI
+                updateWalletStatus();
+                await loadProducts();
 
-        const imageUrl = `https://ipfs.io/ipfs/${product.ipfsCID}`;
-        const priceInEth = web3.utils.fromWei(product.price);
-
-        productCard.innerHTML = `
-          <h3>${product.name}</h3>
-          <div class="product-image">
-            <img src="${imageUrl}" alt="${product.name}" onerror="this.onerror=null; this.src='placeholder.png';">
-          </div>
-          <p class="price">${priceInEth} ${NETWORKS[currentChainId].symbol}</p>
-          <button class="btn btn-primary" onclick="showPurchaseModal(${product.id})">Buy Now</button>
-        `;
-
-        productListing.appendChild(productCard);
-      });
-    }
-
-    function showPurchaseModal(productId) {
-      const product = products.find(p => p.id == productId);
-      if (!product) {
-        showNotification('error', 'Error', 'Product not found');
-        return;
-      }
-
-      const priceInEth = web3.utils.fromWei(product.price);
-
-      document.getElementById('purchase-product-details').innerHTML = `
-        <h3>${product.name}</h3>
-        <div class="product-image">
-          <img src="https://ipfs.io/ipfs/${product.ipfsCID}" alt="${product.name}" onerror="this.onerror=null; this.src='placeholder.png';">
-        </div>
-        <p class="price">${priceInEth} ${NETWORKS[currentChainId].symbol} per unit</p>
-        <p>Available Supply: ${product.availableSupply}</p>
-      `;
-
-      document.getElementById('purchase-form').onsubmit = async function(e) {
-        e.preventDefault();
-        const amount = e.target.elements['amount'].value;
-        await purchaseProduct(productId, amount);
-      };
-
-      showModal('purchase-modal');
-    }
-
-    async function purchaseProduct(productId, amount) {
-      const product = products.find(p => p.id == productId);
-      if (!product) {
-        showNotification('error', 'Error', 'Product not found');
-        return;
-      }
-
-      if (!currentAccount) {
-        showNotification('error', 'Error', 'Please connect your wallet');
-        return;
-      }
-
-      try {
-        const paymentAmount = web3.utils.toBN(product.price).mul(web3.utils.toBN(amount));
-        const productContract = new web3.eth.Contract(CONTRACT_ABI, product.productContractAddress);
-
-        if (product.paymentToken === '0x0000000000000000000000000000000000000000') {
-          // Payment in native currency
-          await productContract.methods.purchaseProduct(amount).send({
-            from: currentAccount,
-            value: paymentAmount.toString()
-          });
-        } else {
-          // Payment in ERC20 token
-          const paymentTokenContract = new web3.eth.Contract(ERC20_ABI, product.paymentToken);
-          await paymentTokenContract.methods.approve(product.productContractAddress, paymentAmount.toString()).send({ from: currentAccount });
-          await productContract.methods.purchaseProduct(amount).send({ from: currentAccount });
+                showNotification('Wallet connected successfully!', 'success');
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
         }
 
-        closeModal('purchase-modal');
-        showNotification('success', 'Success', 'Purchase successful');
-        await loadProducts();
-      } catch (error) {
-        showNotification('error', 'Purchase Failed', formatError(error));
-      }
-    }
+        // Switch network in MetaMask
+        async function switchNetwork(networkKey) {
+            try {
+                const network = networks[networkKey];
 
-    function showNotification(type, title, message) {
-      const notification = document.createElement('div');
-      notification.className = `notification ${type} show`;
-      notification.innerHTML = `
-        <div class="notification-content">
-          <div class="notification-title">${title}</div>
-          <div class="notification-message">${message}</div>
-        </div>
-        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
-      `;
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: network.chainId,
+                        chainName: network.name,
+                        nativeCurrency: {
+                            name: network.symbol,
+                            symbol: network.symbol,
+                            decimals: 18
+                        },
+                        rpcUrls: [network.rpcUrl],
+                        blockExplorerUrls: [network.explorer]
+                    }]
+                });
 
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-      }, 5000);
-    }
+                currentNetwork = networkKey;
+                updateNetworkButtons();
 
-    function showModal(modalId) {
-      const modal = document.getElementById(modalId);
-      modal.classList.add('show');
-    }
-
-    function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      modal.classList.remove('show');
-    }
-
-    function formatError(error) {
-      if (error.message) {
-        if (error.message.includes('User denied')) {
-          return 'Transaction rejected by user';
+            } catch (error) {
+                throw new Error(`Failed to switch network: ${error.message}`);
+            }
         }
-        if (error.message.includes('insufficient funds')) {
-          return 'Insufficient funds for transaction';
-        }
-        return error.message;
-      }
-      return 'An unexpected error occurred';
-    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      if (typeof window.ethereum !== 'undefined') {
-        web3 = new Web3(window.ethereum);
-        web3.eth.getAccounts().then(accounts => {
-          if (accounts.length > 0) {
-            currentAccount = accounts[0];
-            document.getElementById('wallet-status').innerHTML = 
-              `<span>Connected: ${currentAccount.substr(0,6)}...${currentAccount.substr(-4)}</span>`;
-            web3.eth.getChainId().then(chainId => {
-              handleNetworkChange(chainId);
+        // Load products from smart contract
+        async function loadProducts() {
+            try {
+                const network = networks[currentNetwork];
+                const contract = network.vendingMachineContract;
+
+                // Check if contract is properly initialized
+                if (!contract || !contract.methods.getProductCount) {
+                    throw new Error('Smart contract not initialized properly');
+                }
+
+                // Get product count
+                const productCount = await contract.methods.getProductCount().call();
+
+                // Clear existing products
+                const productsGrid = document.getElementById('products-grid');
+                productsGrid.innerHTML = '';
+
+                // Load each product
+                for (let i = 0; i < productCount; i++) {
+                    try {
+                        const basicInfo = await contract.methods.getProductBasicInfo(i).call();
+                        const extendedInfo = await contract.methods.getProductExtendedInfo(i).call();
+
+                        const product = {
+                            id: i,
+                            name: basicInfo.name || basicInfo[0],
+                            ipfsCID: basicInfo.ipfsCID || basicInfo[1],
+                            productAddress: basicInfo.productAddress || basicInfo[2],
+                            creator: basicInfo.creator || basicInfo[3],
+                            beneficiary: basicInfo.beneficiary || basicInfo[4],
+                            isActive: basicInfo.isActive || basicInfo[5],
+                            emergencyLocked: basicInfo.emergencyLocked || basicInfo[6],
+                            price: extendedInfo.price || extendedInfo[0],
+                            productToken: extendedInfo.productToken || extendedInfo[1],
+                            paymentToken: extendedInfo.paymentToken || extendedInfo[2],
+                            availableSupply: extendedInfo.availableSupply || extendedInfo[3],
+                            totalSold: extendedInfo.totalSold || extendedInfo[4],
+                            totalRevenue: extendedInfo.totalRevenue || extendedInfo[5],
+                        };
+
+                        // Fetch payment token name
+                        if (product.paymentToken === '0x0000000000000000000000000000000000000000') {
+                            product.paymentTokenName = network.symbol; // Native token
+                        } else {
+                            // Initialize ERC20 contract for the payment token
+                            const erc20Abi = network.erc20Abi.length > 0 ? network.erc20Abi : standardERC20ABI;
+                            const paymentTokenContract = new web3.eth.Contract(
+                                erc20Abi,
+                                product.paymentToken
+                            );
+                            product.paymentTokenName = await paymentTokenContract.methods.symbol().call();
+                        }
+
+                        // Convert price and availableSupply from wei to ether for display
+                        product.displayPrice = web3.utils.fromWei(product.price, 'ether');
+                        product.displayAvailableSupply = web3.utils.fromWei(product.availableSupply, 'ether');
+
+                        addProductToUI(product);
+                    } catch (innerError) {
+                        console.error(`Error loading product ${i}: ${innerError.message}`);
+                    }
+                }
+            } catch (error) {
+                showNotification('Error loading products: ' + error.message, 'error');
+            }
+        }
+
+        // Add product to UI
+        function addProductToUI(product) {
+            const productsGrid = document.getElementById('products-grid');
+
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+            productCard.innerHTML = `
+                <div class="product-info">
+                    <h2>${product.name}</h2>
+                    <p>Price: ${product.displayPrice} ${product.paymentTokenName}</p>
+                    <p>Available: ${product.displayAvailableSupply}</p>
+                    <p class="contract-address">Token: ${product.productToken}</p>
+                </div>
+                <div class="quantity-selector">
+                    <input type="number" class="quantity-input" value="1" min="1" max="${product.displayAvailableSupply}" />
+                </div>
+                <button class="buy-btn" data-product-id="${product.id}">Buy Now</button>
+            `;
+
+            productsGrid.appendChild(productCard);
+
+            // Add event listeners
+            setupProductCardListeners(productCard, product);
+        }
+
+        // Setup product card event listeners
+        function setupProductCardListeners(productCard, product) {
+            const quantityInput = productCard.querySelector('.quantity-input');
+            const buyBtn = productCard.querySelector('.buy-btn');
+
+            quantityInput.addEventListener('input', () => {
+                const currentQuantity = parseFloat(quantityInput.value);
+                const maxQuantity = parseFloat(product.displayAvailableSupply);
+                if (currentQuantity > maxQuantity) {
+                    quantityInput.value = maxQuantity;
+                } else if (currentQuantity < 1) {
+                    quantityInput.value = 1;
+                }
             });
-          }
+
+            buyBtn.addEventListener('click', () => {
+                const quantity = parseFloat(quantityInput.value);
+                completePurchaseFlow(product.id, quantity);
+            });
+        }
+
+        // Complete purchase flow implementation
+        async function completePurchaseFlow(productId, amount) {
+            try {
+                const network = networks[currentNetwork];
+                const contractAddress = network.contractAddress;
+
+                // Initialize Web3 and contract
+                const { web3, vendingMachine } = await initializePurchaseSystem(contractAddress);
+
+                // Perform pre-purchase validation
+                const product = await performPrePurchaseChecks(productId, amount, web3, vendingMachine);
+
+                // Execute purchase
+                await handleProductPurchase(productId, amount, web3, vendingMachine);
+
+                // Refresh UI/state after successful purchase
+                await updateUIAfterPurchase(productId);
+
+                return true;
+            } catch (error) {
+                handlePurchaseError(error);
+            }
+        }
+
+        // Key Web3 setup and contract initialization
+        async function initializePurchaseSystem(contractAddress) {
+            // Web3 is already initialized
+            // Return the existing web3 and contract instance
+            const web3Instance = web3;
+            const vendingMachine = new web3Instance.eth.Contract(vendingMachineABI, contractAddress);
+
+            return { web3: web3Instance, vendingMachine };
+        }
+
+        // Handle product purchase
+        async function handleProductPurchase(productId, amount, web3Instance, contract) {
+            try {
+                // Get current user's address
+                const accounts = await web3Instance.eth.getAccounts();
+                const userAddress = accounts[0];
+
+                // Get product details
+                const basicInfo = await contract.methods.getProductBasicInfo(productId).call();
+                const extendedInfo = await contract.methods.getProductExtendedInfo(productId).call();
+
+                const product = {
+                    paymentToken: extendedInfo.paymentToken || extendedInfo[2],
+                    price: extendedInfo.price || extendedInfo[0],
+                    isActive: basicInfo.isActive || basicInfo[5],
+                    emergencyLocked: basicInfo.emergencyLocked || basicInfo[6],
+                    availableSupply: extendedInfo.availableSupply || extendedInfo[3],
+                };
+
+                // Convert amount to wei (contract expects wei)
+                const amountInWei = web3.utils.toWei(amount.toString(), 'ether');
+
+                // Calculate payment amount
+                const priceInWei = product.price;
+                const paymentAmount = web3.utils.toBN(priceInWei)
+                    .mul(web3.utils.toBN(amountInWei))
+                    .div(web3.utils.toBN(web3.utils.toWei('1', 'ether'))); // Divide by 1e18 as per contract logic
+
+                // Check if product uses native token (ETH/MATIC/etc) or ERC20
+                if (product.paymentToken === '0x0000000000000000000000000000000000000000') {
+                    // Native token payment
+                    await contract.methods.purchaseProduct(productId, amountInWei)
+                        .send({
+                            from: userAddress,
+                            value: paymentAmount.toString(),
+                            gas: 300000 // Adjust based on network
+                        });
+                } else {
+                    // ERC20 token payment
+                    // First approve the contract to spend tokens
+                    const erc20Abi = networks[currentNetwork].erc20Abi.length > 0 ? networks[currentNetwork].erc20Abi : standardERC20ABI;
+                    const paymentToken = new web3Instance.eth.Contract(
+                        erc20Abi,
+                        product.paymentToken
+                    );
+
+                    // Check user's token balance
+                    const userBalance = await paymentToken.methods.balanceOf(userAddress).call();
+                    if (web3.utils.toBN(userBalance).lt(paymentAmount)) {
+                        throw new Error('Insufficient token balance for purchase');
+                    }
+
+                    // Approve the vending machine contract to spend tokens
+                    await paymentToken.methods.approve(contract.options.address, paymentAmount.toString())
+                        .send({
+                            from: userAddress,
+                            gas: 60000
+                        });
+
+                    // Then make the purchase
+                    await contract.methods.purchaseProduct(productId, amountInWei)
+                        .send({
+                            from: userAddress,
+                            gas: 300000
+                        });
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Purchase failed:', error);
+                throw error;
+            }
+        }
+
+        // Error checking utility
+        function validatePurchaseInput(amount, availableSupply, web3Instance) {
+            const amountInWei = web3.utils.toWei(amount.toString(), 'ether');
+            const supplyInWei = availableSupply;
+
+            if (web3.utils.toBN(amountInWei).gt(web3.utils.toBN(supplyInWei))) {
+                throw new Error('Purchase amount exceeds available supply');
+            }
+
+            if (web3.utils.toBN(amountInWei).lte(web3.utils.toBN('0'))) {
+                throw new Error('Purchase amount must be greater than 0');
+            }
+        }
+
+        // Example implementation of pre-purchase checks
+        async function performPrePurchaseChecks(productId, amount, web3Instance, contract) {
+            // Check if contract is paused
+            const isPaused = await contract.methods.paused().call();
+            if (isPaused) {
+                throw new Error('Contract is paused');
+            }
+
+            // Get product details
+            const basicInfo = await contract.methods.getProductBasicInfo(productId).call();
+            const extendedInfo = await contract.methods.getProductExtendedInfo(productId).call();
+
+            const product = {
+                isActive: basicInfo.isActive || basicInfo[5],
+                emergencyLocked: basicInfo.emergencyLocked || basicInfo[6],
+                availableSupply: extendedInfo.availableSupply || extendedInfo[3],
+            };
+
+            // Check if product is active and not emergency locked
+            if (!product.isActive) {
+                throw new Error('Product is not active');
+            }
+
+            if (product.emergencyLocked) {
+                throw new Error('Product is emergency locked');
+            }
+
+            // Validate purchase amount
+            validatePurchaseInput(amount, product.availableSupply, web3Instance);
+
+            return product;
+        }
+
+        // UI update utility
+        async function updateUIAfterPurchase(productId) {
+            await loadProducts(); // Refresh product list
+            showNotification('Purchase successful!', 'success');
+        }
+
+        // Error handling utility
+        function handlePurchaseError(error) {
+            let errorMessage = 'Purchase failed: ';
+
+            if (error.code === 4001) {
+                errorMessage += 'Transaction rejected by user';
+            } else if (error.message.includes('insufficient funds')) {
+                errorMessage += 'Insufficient funds for purchase';
+            } else {
+                errorMessage += error.message;
+            }
+
+            showNotification(errorMessage, 'error');
+        }
+
+        // UI Helper Functions
+        function updateWalletStatus() {
+            const statusDiv = document.getElementById('wallet-status');
+            if (accounts && accounts.length > 0) {
+                statusDiv.textContent = `Connected: ${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`;
+            } else {
+                statusDiv.textContent = 'Wallet not connected';
+            }
+        }
+
+        function updateNetworkButtons() {
+            document.querySelectorAll('.network-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.network === currentNetwork);
+            });
+        }
+
+        function showNotification(message, type) {
+            const toastContainer = document.getElementById('toast-container');
+
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Event Listeners
+        document.querySelectorAll('.network-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                connectWallet(button.dataset.network);
+            });
         });
 
-        window.ethereum.on('accountsChanged', handleAccountChange);
-        window.ethereum.on('chainChanged', handleNetworkChange);
-      } else {
-        console.warn('MetaMask is not installed');
-      }
-    });
-  </script>
+        // MetaMask Events
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', async (newAccounts) => {
+                accounts = newAccounts;
+                updateWalletStatus();
+                if (accounts.length > 0 && currentNetwork) {
+                    await loadProducts();
+                }
+            });
+
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+        }
+    </script>
+
+    <style>
+        /* Your CSS styles here */
+    </style>
 </body>
 </html>
