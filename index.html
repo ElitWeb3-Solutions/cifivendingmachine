@@ -314,27 +314,20 @@ body {
 </head>
 <body>
     <div class="container">
+        <!-- Sidebar -->
         <div class="sidebar">
             <div id="wallet-status">Wallet not connected</div>
+            <!-- Network Buttons -->
             <button class="network-btn" data-network="xdc">XDC Network</button>
             <button class="network-btn" data-network="avax">Avalanche</button>
             <button class="network-btn" data-network="polygon">Polygon</button>
+
+            <!-- Logo -->
             <div class="logo-container">
                 <img src="https://ipfs.io/ipfs/QmQX4HvtqdYVuJHm17JTyGkK1ttFitg4oAhPzXdy6psm1T" alt="Logo" class="logo">
             </div>
-            <!-- Role-Based Actions -->
-            <div id="owner-actions" class="role-actions" style="display: none;">
-                <h3>Owner Actions</h3>
-                <button id="whitelist-creator-btn">Whitelist Creator</button>
-                <button id="pause-contract-btn">Pause Contract</button>
-                <button id="unpause-contract-btn">Unpause Contract</button>
-            </div>
-            <div id="creator-actions" class="role-actions" style="display: none;">
-                <h3>Creator Actions</h3>
-                <button id="add-product-btn">Add Product</button>
-            </div>
-        </div>
 
+        <!-- Main Content -->
         <div class="main-content">
             <div class="header">
                 <h1>CIFI Cross-Chain Vending Machine</h1>
@@ -366,7 +359,6 @@ body {
                     <input type="text" id="product-token-address-input" placeholder="Product Token Address">
                     <input type="text" id="payment-token-address-input" placeholder="Payment Token Address (Leave blank for native token)">
                     <input type="number" id="product-price-input" placeholder="Price per Unit" step="any">
-                    <input type="number" id="product-initial-supply-input" placeholder="Initial Supply" step="any">
                     <input type="text" id="product-beneficiary-input" placeholder="Beneficiary Address">
                     <button id="confirm-add-product-btn">Add Product</button>
                 </div>
@@ -395,12 +387,12 @@ body {
         // Network configurations
         const networks = {
             xdc: {
-                name: 'XDC Mainnet',
+                name: 'XDC Network',
                 chainId: '0x32',
                 rpcUrl: 'https://rpc.xinfin.network',
                 symbol: 'XDC',
                 explorer: 'https://explorer.xinfin.network',
-                contractAddress: '0x1aa50dAe8DE411c71db6A77e2C0A9ceE35C8BBd1',
+                contractAddress: '0x0F53b47424FaFc8501ADF7f40E9920aC8DA925D7',
                 vendingMachineContract: null,
                 erc20Abi: [
 	{
@@ -835,7 +827,7 @@ body {
                 rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
                 symbol: 'AVAX',
                 explorer: 'https://snowtrace.io',
-                contractAddress: '0xe90bCeef5AC65a36199Cfa29552FBCF36BE531A0',
+                contractAddress: '<AVALANCHE_VENDING_MACHINE_CONTRACT_ADDRESS>',
                 vendingMachineContract: null,
                 erc20Abi: [/* ERC20 ABI Placeholder */]
             },
@@ -843,9 +835,9 @@ body {
                 name: 'Polygon Mainnet',
                 chainId: '0x89',
                 rpcUrl: 'https://polygon-rpc.com',
-                symbol: 'POL',
+                symbol: 'MATIC',
                 explorer: 'https://polygonscan.com',
-                contractAddress: '<POLYGON_CONTRACT_ADDRESS>',
+                contractAddress: '<POLYGON_VENDING_MACHINE_CONTRACT_ADDRESS>',
                 vendingMachineContract: null,
                 erc20Abi: [/* ERC20 ABI Placeholder */]
             }
@@ -878,17 +870,6 @@ body {
 			}
 		],
 		"name": "OwnableUnauthorizedAccount",
-		"type": "error"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "token",
-				"type": "address"
-			}
-		],
-		"name": "SafeERC20FailedOperation",
 		"type": "error"
 	},
 	{
@@ -930,12 +911,6 @@ body {
 				"internalType": "address",
 				"name": "creator",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
 			},
 			{
 				"indexed": false,
@@ -1028,20 +1003,8 @@ body {
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "productToken",
+				"name": "productAddress",
 				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "paymentToken",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "price",
-				"type": "uint256"
 			},
 			{
 				"indexed": false,
@@ -1193,37 +1156,6 @@ body {
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "token",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			}
-		],
-		"name": "TokensWithdrawn",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
 				"indexed": false,
 				"internalType": "address",
 				"name": "account",
@@ -1232,10 +1164,6 @@ body {
 		],
 		"name": "Unpaused",
 		"type": "event"
-	},
-	{
-		"stateMutability": "payable",
-		"type": "fallback"
 	},
 	{
 		"inputs": [],
@@ -1340,6 +1268,62 @@ body {
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "productId",
+				"type": "uint256"
+			}
+		],
+		"name": "getProductBasicInfo",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "ipfsCID",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "productAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "creator",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "beneficiary",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "isActive",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "emergencyLocked",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct TestVendingMachine.ProductBasicInfo",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "getProductCount",
 		"outputs": [
@@ -1360,91 +1344,44 @@ body {
 				"type": "uint256"
 			}
 		],
-		"name": "getProductDetails",
+		"name": "getProductExtendedInfo",
 		"outputs": [
 			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "ipfsCID",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "productToken",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "paymentToken",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "price",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "availableSupply",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "isActive",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint256",
-				"name": "totalSold",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "totalRevenue",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "creator",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "beneficiary",
-				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "emergencyLocked",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "productId",
-				"type": "uint256"
-			}
-		],
-		"name": "getProductRevenue",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "totalSold",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "totalRevenue",
-				"type": "uint256"
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "productToken",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "paymentToken",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "availableSupply",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalSold",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalRevenue",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct TestVendingMachine.ProductExtendedInfo",
+				"name": "",
+				"type": "tuple"
 			}
 		],
 		"stateMutability": "view",
@@ -1524,33 +1461,8 @@ body {
 			},
 			{
 				"internalType": "address",
-				"name": "productToken",
+				"name": "productAddress",
 				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "paymentToken",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "price",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "isActive",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint256",
-				"name": "totalSold",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "totalRevenue",
-				"type": "uint256"
 			},
 			{
 				"internalType": "address",
@@ -1561,6 +1473,11 @@ body {
 				"internalType": "address",
 				"name": "beneficiary",
 				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "isActive",
+				"type": "bool"
 			},
 			{
 				"internalType": "bool",
@@ -1587,6 +1504,19 @@ body {
 		"name": "purchaseProduct",
 		"outputs": [],
 		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "productId",
+				"type": "uint256"
+			}
+		],
+		"name": "recalibrateProduct",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -1706,12 +1636,423 @@ body {
 		],
 		"stateMutability": "view",
 		"type": "function"
+	}
+];
+        const productContractABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_creator",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_vendingMachine",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
 	},
 	{
 		"inputs": [
 			{
 				"internalType": "address",
 				"name": "token",
+				"type": "address"
+			}
+		],
+		"name": "SafeERC20FailedOperation",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "ipfsCID",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "productToken",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "paymentToken",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "beneficiary",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "ProductDetailsSet",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "paymentAmount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "ProductPurchased",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newPrice",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "newIpfsCID",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "updater",
+				"type": "address"
+			}
+		],
+		"name": "ProductUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "vendingMachine",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "VendingMachineSet",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "beneficiary",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "emergencyLocked",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			}
+		],
+		"name": "emergencyWithdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getProductDetails",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_ipfsCID",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "_productToken",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_paymentToken",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_availableSupply",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "_isActive",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_totalSold",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_totalRevenue",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_creator",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_beneficiary",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "_emergencyLocked",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ipfsCID",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "isActive",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "isProductAvailable",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "name",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paymentToken",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "price",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "productToken",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "buyer",
 				"type": "address"
 			},
 			{
@@ -1720,14 +2061,170 @@ body {
 				"type": "uint256"
 			}
 		],
-		"name": "withdrawTokens",
+		"name": "purchaseProduct",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "paymentAmount",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "recalibrate",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
-		"stateMutability": "payable",
-		"type": "receive"
+		"inputs": [
+			{
+				"internalType": "bool",
+				"name": "_isActive",
+				"type": "bool"
+			}
+		],
+		"name": "setActiveStatus",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bool",
+				"name": "_emergencyLocked",
+				"type": "bool"
+			}
+		],
+		"name": "setEmergencyLock",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_ipfsCID",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "_productToken",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_paymentToken",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_beneficiary",
+				"type": "address"
+			}
+		],
+		"name": "setProductDetails",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalRevenue",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalSold",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "newIpfsCID",
+				"type": "string"
+			}
+		],
+		"name": "updateProduct",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "vendingMachine",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	}
 ];
         const standardERC20ABI = [
@@ -2623,11 +3120,6 @@ body {
                 const network = networks[currentNetwork];
                 const contract = network.vendingMachineContract;
 
-                // Check if contract is properly initialized
-                if (!contract || !contract.methods.getProductCount) {
-                    throw new Error('Smart contract not initialized properly');
-                }
-
                 // Get product count
                 const productCount = await contract.methods.getProductCount().call();
 
@@ -2638,22 +3130,25 @@ body {
                 // Load each product
                 for (let i = 0; i < productCount; i++) {
                     try {
-                        const productData = await contract.methods.getProductDetails(i).call();
+                        // Fetch basic and extended info
+                        const basicInfo = await contract.methods.getProductBasicInfo(i).call();
+                        const extendedInfo = await contract.methods.getProductExtendedInfo(i).call();
 
                         const product = {
                             id: i,
-                            name: productData.name,
-                            ipfsCID: productData.ipfsCID,
-                            productToken: productData.productToken,
-                            paymentToken: productData.paymentToken,
-                            price: productData.price,
-                            availableSupply: productData.availableSupply,
-                            isActive: productData.isActive,
-                            totalSold: productData.totalSold,
-                            totalRevenue: productData.totalRevenue,
-                            creator: productData.creator,
-                            beneficiary: productData.beneficiary,
-                            emergencyLocked: productData.emergencyLocked
+                            name: basicInfo.name,
+                            ipfsCID: basicInfo.ipfsCID,
+                            productAddress: basicInfo.productAddress,
+                            creator: basicInfo.creator,
+                            beneficiary: basicInfo.beneficiary,
+                            isActive: basicInfo.isActive,
+                            emergencyLocked: basicInfo.emergencyLocked,
+                            price: extendedInfo.price,
+                            productToken: extendedInfo.productToken,
+                            paymentToken: extendedInfo.paymentToken,
+                            availableSupply: extendedInfo.availableSupply,
+                            totalSold: extendedInfo.totalSold,
+                            totalRevenue: extendedInfo.totalRevenue
                         };
 
                         // Fetch payment token name
@@ -2680,7 +3175,7 @@ body {
 
                         // Convert price and availableSupply to human-readable format
                         product.displayPrice = web3.utils.fromWei(product.price, 'ether');
-                        product.displayAvailableSupply = web3.utils.fromWei(product.availableSupply, 'ether');
+                        product.displayAvailableSupply = web3.utils.fromWei(product.availableSupply.toString(), 'ether');
 
                         addProductToUI(product);
                     } catch (innerError) {
@@ -2704,11 +3199,11 @@ body {
                     <h2>${product.name}</h2>
                     <p>Price: ${product.displayPrice} ${product.paymentTokenName}</p>
                     <p>Available: ${product.displayAvailableSupply}</p>
-                    <p>Total Sold: ${web3.utils.fromWei(product.totalSold, 'ether')}</p>
+                    <p>Total Sold: ${web3.utils.fromWei(product.totalSold.toString(), 'ether')}</p>
                     <p>Creator: ${product.creator}</p>
                     <p>Beneficiary: ${product.beneficiary}</p>
                     ${product.emergencyLocked ? '<p class="emergency-lock">Emergency Locked</p>' : ''}
-                    <p class="contract-address">Token: ${product.productToken}</p>
+                    <p class="contract-address">Product Contract: ${product.productAddress}</p>
                 </div>
                 ${product.isActive && !product.emergencyLocked ? `
                     <div class="quantity-selector">
@@ -2716,7 +3211,7 @@ body {
                     </div>
                     <button class="buy-btn" data-product-id="${product.id}">Buy Now</button>
                 ` : '<p class="inactive-product">Product not available</p>'}
-                ${isWhitelistedCreator && userAddress.toLowerCase() === product.creator.toLowerCase() ? `
+                ${(isOwner || (isWhitelistedCreator && userAddress.toLowerCase() === product.creator.toLowerCase())) ? `
                     <button class="update-product-btn" data-product-id="${product.id}">Update Product</button>
                     <button class="emergency-withdraw-btn" data-product-id="${product.id}">Emergency Withdraw</button>
                 ` : ''}
@@ -2796,30 +3291,27 @@ body {
             }
 
             // Get product details
-            const product = await contract.methods.getProductDetails(productId).call();
+            const basicInfo = await contract.methods.getProductBasicInfo(productId).call();
+            const extendedInfo = await contract.methods.getProductExtendedInfo(productId).call();
+
+            const availableSupply = web3.utils.toBN(extendedInfo.availableSupply);
+            const amountBN = web3.utils.toBN(amount);
 
             // Check if product is active
-            if (!product.isActive) {
-                throw new Error('Product is not active');
+            if (!basicInfo.isActive || basicInfo.emergencyLocked) {
+                throw new Error('Product is not available');
             }
 
             // Validate purchase amount
-            validatePurchaseInput(amount, product.availableSupply, web3Instance);
-
-            return product;
-        }
-
-        function validatePurchaseInput(amount, availableSupply, web3Instance) {
-            const amountInWei = web3.utils.toWei(amount.toString(), 'ether');
-            const supplyInWei = availableSupply;
-
-            if (web3.utils.toBN(amountInWei).gt(web3.utils.toBN(supplyInWei))) {
+            if (amountBN.gt(availableSupply)) {
                 throw new Error('Purchase amount exceeds available supply');
             }
 
-            if (web3.utils.toBN(amountInWei).lte(web3.utils.toBN('0'))) {
+            if (amountBN.lte(web3.utils.toBN('0'))) {
                 throw new Error('Purchase amount must be greater than 0');
             }
+
+            return { basicInfo, extendedInfo };
         }
 
         async function handleProductPurchase(productId, amount, web3Instance, contract) {
@@ -2827,22 +3319,19 @@ body {
                 // Get current user's address
                 const userAddress = accounts[0];
 
-                // Get product details
-                const product = await contract.methods.getProductDetails(productId).call();
+                // Get product extended info
+                const extendedInfo = await contract.methods.getProductExtendedInfo(productId).call();
 
-                // Convert amount to wei (contract expects wei)
-                const amountInWei = web3.utils.toWei(amount.toString(), 'ether');
+                const pricePerUnit = web3.utils.toBN(extendedInfo.price);
+                const amountBN = web3.utils.toBN(amount);
 
                 // Calculate payment amount
-                const priceInWei = product.price;
-                const paymentAmount = web3.utils.toBN(priceInWei)
-                    .mul(web3.utils.toBN(amountInWei))
-                    .div(web3.utils.toBN(web3.utils.toWei('1', 'ether'))); // Divide by 1e18 as per contract logic
+                const paymentAmount = pricePerUnit.mul(amountBN);
 
                 // Check if product uses native token (ETH/MATIC/etc) or ERC20
-                if (product.paymentToken === '0x0000000000000000000000000000000000000000') {
+                if (extendedInfo.paymentToken === '0x0000000000000000000000000000000000000000') {
                     // Native token payment
-                    await contract.methods.purchaseProduct(productId, amountInWei)
+                    await contract.methods.purchaseProduct(productId, amount)
                         .send({
                             from: userAddress,
                             value: paymentAmount.toString(),
@@ -2854,7 +3343,7 @@ body {
                     const erc20Abi = networks[currentNetwork].erc20Abi.length > 0 ? networks[currentNetwork].erc20Abi : standardERC20ABI;
                     const paymentToken = new web3Instance.eth.Contract(
                         erc20Abi,
-                        product.paymentToken
+                        extendedInfo.paymentToken
                     );
 
                     // Check user's token balance
@@ -2871,7 +3360,7 @@ body {
                         });
 
                     // Then make the purchase
-                    await contract.methods.purchaseProduct(productId, amountInWei)
+                    await contract.methods.purchaseProduct(productId, amount)
                         .send({
                             from: userAddress,
                             gas: 300000
@@ -3039,10 +3528,9 @@ body {
                 const productToken = document.getElementById('product-token-address-input').value.trim();
                 let paymentToken = document.getElementById('payment-token-address-input').value.trim();
                 const price = document.getElementById('product-price-input').value.trim();
-                const initialSupply = document.getElementById('product-initial-supply-input').value.trim();
                 const beneficiary = document.getElementById('product-beneficiary-input').value.trim();
 
-                if (!name || !ipfsCID || !productToken || !price || !initialSupply || !beneficiary) {
+                if (!name || !ipfsCID || !productToken || !price || !beneficiary) {
                     showNotification('Please fill in all required fields', 'error');
                     return;
                 }
@@ -3063,7 +3551,6 @@ body {
                 const contract = network.vendingMachineContract;
 
                 const priceInWei = web3.utils.toWei(price.toString(), 'ether');
-                const initialSupplyInWei = web3.utils.toWei(initialSupply.toString(), 'ether');
 
                 await contract.methods.addProduct(
                     name,
@@ -3071,7 +3558,6 @@ body {
                     productToken,
                     paymentToken,
                     priceInWei,
-                    initialSupplyInWei,
                     beneficiary
                 ).send({ from: userAddress });
 
