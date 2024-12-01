@@ -319,9 +319,9 @@ body {
             <button class="network-btn" data-network="xdc">XDC Network</button>
             <button class="network-btn" data-network="avax">Avalanche</button>
             <button class="network-btn" data-network="polygon">Polygon</button>
-            <div class="logo-container">
-                <img src="https://ipfs.io/ipfs/QmQX4HvtqdYVuJHm17JTyGkK1ttFitg4oAhPzXdy6psm1T" alt="Logo" class="logo">
-            </div>
+	<div class="logo-container">
+        <img src="https://ipfs.io/ipfs/QmQX4HvtqdYVuJHm17JTyGkK1ttFitg4oAhPzXdy6psm1T" alt="Logo" class="logo">
+    </div>
         </div>
 
         <div class="main-content">
@@ -1907,7 +1907,7 @@ body {
                 rpcUrl: 'https://polygon-rpc.com',
                 symbol: 'POL',
                 explorer: 'https://polygonscan.com',
-                contractAddress: '0xd3A42e2aDEc479dAd1C08F76a635da9e6bc888f5',
+                contractAddress: '0x63E897E8765E91dc430407e2EBc39F48418c9a77',
                 vendingMachineContract: null,
                 erc20Abi: [
 	{
@@ -3471,27 +3471,11 @@ body {
 		"stateMutability": "view",
 		"type": "function"
 	}
-]; 
-
+];
+        // Standard ERC20 ABI (includes name, symbol, decimals, approve, transfer, etc.)
         const standardERC20ABI = [
 	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_symbol",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_tokenSupply",
-				"type": "uint256"
-			}
-		],
+		"inputs": [],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
 	},
@@ -3524,51 +3508,6 @@ body {
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "Mint",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "MinterAdded",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "MinterRemoved",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
 				"indexed": true,
 				"internalType": "address",
 				"name": "from",
@@ -3594,25 +3533,12 @@ body {
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "addMinter",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "owner",
+				"name": "",
 				"type": "address"
 			},
 			{
 				"internalType": "address",
-				"name": "spender",
+				"name": "",
 				"type": "address"
 			}
 		],
@@ -3636,7 +3562,7 @@ body {
 			},
 			{
 				"internalType": "uint256",
-				"name": "amount",
+				"name": "value",
 				"type": "uint256"
 			}
 		],
@@ -3644,7 +3570,7 @@ body {
 		"outputs": [
 			{
 				"internalType": "bool",
-				"name": "",
+				"name": "success",
 				"type": "bool"
 			}
 		],
@@ -3655,7 +3581,7 @@ body {
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "account",
+				"name": "",
 				"type": "address"
 			}
 		],
@@ -3671,24 +3597,6 @@ body {
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_account",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_amount",
-				"type": "uint256"
-			}
-		],
-		"name": "burnCIFIToken",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "decimals",
 		"outputs": [
@@ -3699,91 +3607,6 @@ body {
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "spender",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "subtractedValue",
-				"type": "uint256"
-			}
-		],
-		"name": "decreaseAllowance",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "spender",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "addedValue",
-				"type": "uint256"
-			}
-		],
-		"name": "increaseAllowance",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "isMinter",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_account",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_amount",
-				"type": "uint256"
-			}
-		],
-		"name": "mintCIFIToken",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -3801,32 +3624,12 @@ body {
 	},
 	{
 		"inputs": [],
-		"name": "renounceMinter",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "symbol",
 		"outputs": [
 			{
 				"internalType": "string",
 				"name": "",
 				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "tokenSupply",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -3854,7 +3657,7 @@ body {
 			},
 			{
 				"internalType": "uint256",
-				"name": "amount",
+				"name": "value",
 				"type": "uint256"
 			}
 		],
@@ -3862,7 +3665,7 @@ body {
 		"outputs": [
 			{
 				"internalType": "bool",
-				"name": "",
+				"name": "success",
 				"type": "bool"
 			}
 		],
@@ -3883,7 +3686,7 @@ body {
 			},
 			{
 				"internalType": "uint256",
-				"name": "amount",
+				"name": "value",
 				"type": "uint256"
 			}
 		],
@@ -3891,7 +3694,7 @@ body {
 		"outputs": [
 			{
 				"internalType": "bool",
-				"name": "",
+				"name": "success",
 				"type": "bool"
 			}
 		],
@@ -3993,24 +3796,18 @@ body {
                 // Load each product
                 for (let i = 0; i < productCount; i++) {
                     try {
-                        const basicInfo = await contract.methods.getProductBasicInfo(i).call();
-                        const extendedInfo = await contract.methods.getProductExtendedInfo(i).call();
+                        const productData = await contract.methods.getProductDetails(i).call();
 
                         const product = {
                             id: i,
-                            name: basicInfo.name || basicInfo[0],
-                            ipfsCID: basicInfo.ipfsCID || basicInfo[1],
-                            productAddress: basicInfo.productAddress || basicInfo[2],
-                            creator: basicInfo.creator || basicInfo[3],
-                            beneficiary: basicInfo.beneficiary || basicInfo[4],
-                            isActive: basicInfo.isActive || basicInfo[5],
-                            emergencyLocked: basicInfo.emergencyLocked || basicInfo[6],
-                            price: extendedInfo.price || extendedInfo[0],
-                            productToken: extendedInfo.productToken || extendedInfo[1],
-                            paymentToken: extendedInfo.paymentToken || extendedInfo[2],
-                            availableSupply: extendedInfo.availableSupply || extendedInfo[3],
-                            totalSold: extendedInfo.totalSold || extendedInfo[4],
-                            totalRevenue: extendedInfo.totalRevenue || extendedInfo[5],
+                            name: productData.name || productData[0],
+                            productToken: productData.productToken || productData[1],
+                            paymentToken: productData.paymentToken || productData[2],
+                            price: productData.price || productData[3],
+                            availableSupply: productData.availableSupply || productData[4],
+                            isActive: productData.isActive || productData[5],
+                            totalSold: productData.totalSold || productData[6],
+                            totalRevenue: productData.totalRevenue || productData[7],
                         };
 
                         // Fetch payment token name
@@ -4023,7 +3820,7 @@ body {
                                 erc20Abi,
                                 product.paymentToken
                             );
-                            product.paymentTokenName = await paymentTokenContract.methods.symbol().call();
+                            product.paymentTokenName = await paymentTokenContract.methods.name().call();
                         }
 
                         // Convert price and availableSupply from wei to ether for display
@@ -4128,16 +3925,7 @@ body {
                 const userAddress = accounts[0];
 
                 // Get product details
-                const basicInfo = await contract.methods.getProductBasicInfo(productId).call();
-                const extendedInfo = await contract.methods.getProductExtendedInfo(productId).call();
-
-                const product = {
-                    paymentToken: extendedInfo.paymentToken || extendedInfo[2],
-                    price: extendedInfo.price || extendedInfo[0],
-                    isActive: basicInfo.isActive || basicInfo[5],
-                    emergencyLocked: basicInfo.emergencyLocked || basicInfo[6],
-                    availableSupply: extendedInfo.availableSupply || extendedInfo[3],
-                };
+                const product = await contract.methods.getProductDetails(productId).call();
 
                 // Convert amount to wei (contract expects wei)
                 const amountInWei = web3.utils.toWei(amount.toString(), 'ether');
@@ -4217,22 +4005,11 @@ body {
             }
 
             // Get product details
-            const basicInfo = await contract.methods.getProductBasicInfo(productId).call();
-            const extendedInfo = await contract.methods.getProductExtendedInfo(productId).call();
+            const product = await contract.methods.getProductDetails(productId).call();
 
-            const product = {
-                isActive: basicInfo.isActive || basicInfo[5],
-                emergencyLocked: basicInfo.emergencyLocked || basicInfo[6],
-                availableSupply: extendedInfo.availableSupply || extendedInfo[3],
-            };
-
-            // Check if product is active and not emergency locked
+            // Check if product is active
             if (!product.isActive) {
                 throw new Error('Product is not active');
-            }
-
-            if (product.emergencyLocked) {
-                throw new Error('Product is emergency locked');
             }
 
             // Validate purchase amount
@@ -4319,7 +4096,47 @@ body {
     </script>
 
     <style>
-        /* Your CSS styles here */
+        .toast-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            max-width: 300px;
+            z-index: 1000;
+            padding: 10px;
+        }
+
+        .custom-toast {
+            background: var(--primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid;
+        }
+
+        .custom-toast.success {
+            border-left-color: #48BB78;
+        }
+
+        .custom-toast.error {
+            border-left-color: #F56565;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </body>
 </html>
