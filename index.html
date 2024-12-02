@@ -1799,17 +1799,27 @@ body {
             productCard.innerHTML = `
                 <div class="product-info">
                     <h2>${product.name}</h2>
-                    <p>Price: ${product.price} ${currentNetwork.symbol}</p>
+                    <p>Price per Unit: ${product.price} ${currentNetwork.symbol}</p>
                     <p>Available: ${product.availableSupply}</p>
-                    <input type="number" min="1" max="${product.availableSupply}" value="1" class="amount-input" data-product-id="${product.id}">
+                    <label for="amount-${product.id}">Units:</label>
+                    <input type="number" min="1" max="${product.availableSupply}" value="1" class="amount-input" id="amount-${product.id}" data-product-id="${product.id}">
+                    <p id="total-price-${product.id}" class="total-price">Total Price: ${product.price} ${currentNetwork.symbol}</p>
                 </div>
                 <button class="buy-btn" data-product-id="${product.id}">Buy Now</button>
             `;
 
             productsGrid.appendChild(productCard);
 
+            const amountInput = productCard.querySelector('.amount-input');
+            const totalPriceElement = productCard.querySelector(`#total-price-${product.id}`);
+
+            amountInput.addEventListener('input', () => {
+                const amount = parseFloat(amountInput.value) || 0;
+                const totalPrice = (amount * parseFloat(product.price)).toFixed(4);
+                totalPriceElement.textContent = `Total Price: ${totalPrice} ${currentNetwork.symbol}`;
+            });
+
             productCard.querySelector('.buy-btn').addEventListener('click', () => {
-                const amountInput = productCard.querySelector('.amount-input');
                 const amount = parseFloat(amountInput.value);
                 if (isNaN(amount) || amount <= 0) {
                     showNotification('Please enter a valid amount.', 'error');
@@ -1852,7 +1862,6 @@ body {
                         "type": "function"
                     }], paymentTokenAddress);
 
-                    // Approve the contract to spend the payment tokens
                     await paymentTokenContract.methods.approve(currentNetwork.contractAddress, totalCost.toString()).send({ from: accounts[0] });
                 }
 
@@ -1896,7 +1905,6 @@ body {
     </script>
 
     <style>
-        /* Add your styles here */
         .product-card {
             border: 1px solid #ccc;
             padding: 15px;
@@ -1910,6 +1918,10 @@ body {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
+        }
+        .total-price {
+            font-weight: bold;
+            color: #333;
         }
         .buy-btn {
             padding: 10px;
