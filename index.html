@@ -1720,7 +1720,7 @@ body {
                 name: 'Polygon Mainnet',
                 chainId: '0x89',
                 rpcUrl: 'https://polygon-rpc.com',
-                symbol: 'POL',
+                symbol: 'MATIC',
                 explorer: 'https://polygonscan.com',
                 contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c'
             }
@@ -1770,13 +1770,17 @@ body {
 
                     if (!basicInfo.isInitialized || basicInfo.isPaused) continue;
 
+                    const totalProduct = web3.utils.fromWei(financialInfo.totalProduct, 'ether');
+                    const unsharedProduct = web3.utils.fromWei(financialInfo.unsharedProduct, 'ether');
+                    const availableSupply = parseFloat(totalProduct) + parseFloat(unsharedProduct);
+
                     const product = {
                         id: i,
                         name: basicInfo.productName || `Product ${i}`,
                         productToken: basicInfo.productToken,
                         paymentToken: basicInfo.paymentToken,
                         price: web3.utils.fromWei(basicInfo.price, 'ether'),
-                        availableSupply: web3.utils.fromWei(financialInfo.totalProduct, 'ether'),
+                        availableSupply: availableSupply.toString(),
                         isNativePayment: basicInfo.isNativePayment
                     };
 
@@ -1797,6 +1801,7 @@ body {
                     <h2>${product.name}</h2>
                     <p>Price: ${product.price} ${currentNetwork.symbol}</p>
                     <p>Available: ${product.availableSupply}</p>
+                    <input type="number" min="1" max="${product.availableSupply}" value="1" class="amount-input" data-product-id="${product.id}">
                 </div>
                 <button class="buy-btn" data-product-id="${product.id}">Buy Now</button>
             `;
@@ -1804,20 +1809,54 @@ body {
             productsGrid.appendChild(productCard);
 
             productCard.querySelector('.buy-btn').addEventListener('click', () => {
-                completePurchaseFlow(product.id, 1);
+                const amountInput = productCard.querySelector('.amount-input');
+                const amount = parseFloat(amountInput.value);
+                if (isNaN(amount) || amount <= 0) {
+                    showNotification('Please enter a valid amount.', 'error');
+                    return;
+                }
+                if (amount > parseFloat(product.availableSupply)) {
+                    showNotification('Amount exceeds available supply.', 'error');
+                    return;
+                }
+                completePurchaseFlow(product.id, amount);
             });
         }
 
         async function completePurchaseFlow(vaultId, amount) {
             try {
                 const contract = new web3.eth.Contract(vendingMachineABI, currentNetwork.contractAddress);
-                const price = await contract.methods.getVaultBasicInfo(vaultId).call().price;
-                const totalCost = web3.utils.toBN(price).mul(web3.utils.toBN(web3.utils.toWei(amount.toString(), 'ether')));
+                const basicInfo = await contract.methods.getVaultBasicInfo(vaultId).call();
+                const pricePerUnit = basicInfo.price; // In Wei
+                const totalCost = web3.utils.toBN(pricePerUnit).mul(web3.utils.toBN(web3.utils.toWei(amount.toString(), 'ether'))).div(web3.utils.toBN(web3.utils.toWei('1', 'ether')));
 
-                await contract.methods.buyProduct(vaultId, web3.utils.toWei(amount.toString(), 'ether')).send({
+                const isNativePayment = basicInfo.isNativePayment;
+
+                const buyProductMethod = contract.methods.buyProduct(vaultId, web3.utils.toWei(amount.toString(), 'ether'));
+
+                const txOptions = {
                     from: accounts[0],
-                    value: totalCost.toString()
-                });
+                    value: isNativePayment ? totalCost.toString() : '0'
+                };
+
+                if (!isNativePayment) {
+                    const paymentTokenAddress = basicInfo.paymentToken;
+                    const paymentTokenContract = new web3.eth.Contract([{
+                        "constant": false,
+                        "inputs": [
+                            { "name": "_spender", "type": "address" },
+                            { "name": "_value", "type": "uint256" }
+                        ],
+                        "name": "approve",
+                        "outputs": [{ "name": "success", "type": "bool" }],
+                        "type": "function"
+                    }], paymentTokenAddress);
+
+                    // Approve the contract to spend the payment tokens
+                    await paymentTokenContract.methods.approve(currentNetwork.contractAddress, totalCost.toString()).send({ from: accounts[0] });
+                }
+
+                await buyProductMethod.send(txOptions);
 
                 showNotification('Purchase successful!', 'success');
                 await loadProducts();
@@ -1858,6 +1897,31 @@ body {
 
     <style>
         /* Add your styles here */
+        .product-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .product-info {
+            margin-bottom: 10px;
+        }
+        .amount-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .buy-btn {
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .buy-btn:hover {
+            background-color: #45a049;
+        }
     </style>
 </body>
 </html>
