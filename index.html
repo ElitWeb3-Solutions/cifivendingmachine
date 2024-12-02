@@ -313,315 +313,37 @@ body {
 </style>
 </head>
 <body>
-  <div class="dashboard">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="logo-container">
-        <img src="https://ipfs.io/ipfs/QmQX4HvtqdYVuJHm17JTyGkK1ttFitg4oAhPzXdy6psm1T" alt="Company Logo" class="logo-image">
-      </div>
-      <h2>CIFI VM Admin</h2>
-      <div class="network-selector">
-        <select id="network-select">
-          <option value="50">XDC Mainnet</option>
-          <option value="43114">Avalanche C-Chain</option>
-          <option value="137">Polygon Mainnet</option>
-        </select>
-      </div>
-      <div class="address-display" id="connected-address">
-        Not Connected
-      </div>
-      <button class="btn btn-primary" id="connect-wallet-btn">Connect Wallet</button>
-      <nav>
-        <a href="#" class="nav-link active" data-section="dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
-        <a href="#" class="nav-link" data-section="admin"><i class="fas fa-user-shield"></i> Admin Functions</a>
-      </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Network Info -->
-      <div class="network-info">
-        <div class="current-network" id="current-network">
-          Network: Not Connected
-        </div>
-        <div class="network-status" id="network-status"></div>
-      </div>
-
-      <!-- Dashboard Section -->
-      <div id="dashboard-section">
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <h3>Total Vaults</h3>
-            <p id="total-vaults">Loading...</p>
-          </div>
-          <div class="stat-card">
-            <h3>Total Deposits</h3>
-            <p id="total-deposits">Loading...</p>
-          </div>
-          <div class="stat-card">
-            <h3>Contract Balance</h3>
-            <p id="contract-balance">Loading...</p>
-          </div>
-          <div class="stat-card">
-            <h3>Contract Status</h3>
-            <p id="contract-status">Loading...</p>
-          </div>
-        </div>
-
-        <!-- Vaults Section -->
-        <div class="vaults-section">
-          <div class="section-header">
-            <h2>Vaults</h2>
-            <div class="header-actions">
-              <button class="btn btn-primary" id="refresh-vaults">
-                <i class="fas fa-sync"></i> Refresh
-              </button>
-              <button class="btn btn-primary" id="initialize-vault-btn">
-                <i class="fas fa-plus"></i> Initialize Vault
-              </button>
+    <div class="container">
+        <div class="sidebar">
+            <div id="wallet-status">Wallet not connected</div>
+            <button class="network-btn" data-network="xdc">XDC Network</button>
+            <button class="network-btn" data-network="avax">Avalanche</button>
+            <button class="network-btn" data-network="polygon">Polygon</button>
+            <div class="logo-container">
+                <img src="https://ipfs.io/ipfs/QmQX4HvtqdYVuJHm17JTyGkK1ttFitg4oAhPzXdy6psm1T" alt="Logo" class="logo">
             </div>
-          </div>
-
-          <div class="vaults-grid" id="vaults-list">
-            <!-- Vault cards will be populated here -->
-          </div>
         </div>
 
-        <!-- Analytics Section -->
-        <div class="analytics-section">
-          <h2>Analytics Dashboard</h2>
-          <div class="chart-container">
-            <canvas id="vaults-chart"></canvas>
-          </div>
-        </div>
-      </div>
+        <div class="main-content">
+            <div class="header">
+                <h1>CIFI Cross-Chain Vending Machine</h1>
+                <p>
+                    Purchase tokens across multiple networks seamlessly. Connect your wallet by selecting a network from the sidebar.
+                </p>
+            </div>
 
-      <!-- Admin Functions Section -->
-      <div id="admin-section" style="display: none;">
-        <div class="admin-section">
-          <h2>Admin Functions</h2>
-          <div class="admin-controls">
-            <button class="btn btn-primary" id="add-manager-btn"><i class="fas fa-user-plus"></i> Add Manager</button>
-            <button class="btn btn-primary" id="remove-manager-btn"><i class="fas fa-user-minus"></i> Remove Manager</button>
-            <button class="btn btn-primary" id="add-depositor-btn"><i class="fas fa-user-plus"></i> Add Depositor</button>
-            <button class="btn btn-primary" id="remove-depositor-btn"><i class="fas fa-user-minus"></i> Remove Depositor</button>
-            <button class="btn btn-primary" id="blacklist-address-btn"><i class="fas fa-ban"></i> Blacklist Address</button>
-            <button class="btn btn-primary" id="unblacklist-address-btn"><i class="fas fa-check-circle"></i> Unblacklist Address</button>
-            <button class="btn btn-danger" id="toggle-contract-pause-btn">Loading Contract State...</button>
-          </div>
+            <div id="products-grid" class="products-grid">
+                <!-- Products will be dynamically populated here -->
+            </div>
+
+            <div class="toast-container" id="toast-container">
+                <!-- Notifications will be shown here -->
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Modals -->
-  <!-- Initialize Vault Modal -->
-  <div id="initialize-vault-modal" class="modal">
-    <div class="modal-content">
-      <h2>Initialize New Vault</h2>
-      <form id="initialize-vault-form">
-        <div class="form-group">
-          <label>Product Token Address</label>
-          <input type="text" name="productToken" required>
-        </div>
-        <div class="form-group">
-          <label>Payment Token Address</label>
-          <input type="text" name="paymentToken" required placeholder="Use 0x0 for native token">
-        </div>
-        <div class="form-group">
-          <label>Initial Price</label>
-          <input type="number" name="initialPrice" required>
-        </div>
-        <div class="form-group">
-          <label>Product Name</label>
-          <input type="text" name="productName" required>
-        </div>
-        <div class="form-group">
-          <label>Share Token Name</label>
-          <input type="text" name="shareName" required>
-        </div>
-        <div class="form-group">
-          <label>Share Token Symbol</label>
-          <input type="text" name="shareSymbol" required>
-        </div>
-        <div class="form-group">
-          <label>Is Native Payment?</label>
-          <select name="isNativePayment" required>
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-          </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Initialize Vault</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('initialize-vault-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Update Price Modal -->
-  <div id="update-price-modal" class="modal">
-    <div class="modal-content">
-      <h2>Update Vault Price</h2>
-      <form id="update-price-form">
-        <input type="hidden" name="vaultId">
-        <div class="form-group">
-          <label>New Price</label>
-          <input type="number" name="newPrice" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Update Price</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('update-price-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Update Product Name Modal -->
-  <div id="update-product-name-modal" class="modal">
-    <div class="modal-content">
-      <h2>Update Product Name</h2>
-      <form id="update-product-name-form">
-        <input type="hidden" name="vaultId">
-        <div class="form-group">
-          <label>New Product Name</label>
-          <input type="text" name="newProductName" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Update Product Name</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('update-product-name-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Deposit Product Modal -->
-  <div id="deposit-product-modal" class="modal">
-    <div class="modal-content">
-      <h2>Deposit Product</h2>
-      <form id="deposit-product-form">
-        <input type="hidden" name="vaultId">
-        <div class="form-group">
-          <label>Amount</label>
-          <input type="number" name="amount" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Deposit</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('deposit-product-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Buy Product Modal -->
-  <div id="buy-product-modal" class="modal">
-    <div class="modal-content">
-      <h2>Buy Product</h2>
-      <form id="buy-product-form">
-        <input type="hidden" name="vaultId">
-        <div class="form-group">
-          <label>Amount to Purchase</label>
-          <input type="number" name="amount" required>
-        </div>
-        <p id="buy-product-price"></p>
-        <button type="submit" class="btn btn-primary">Buy</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('buy-product-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add Manager Modal -->
-  <div id="add-manager-modal" class="modal">
-    <div class="modal-content">
-      <h2>Add Manager</h2>
-      <form id="add-manager-form">
-        <div class="form-group">
-          <label>Manager Address</label>
-          <input type="text" name="managerAddress" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Manager</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('add-manager-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Remove Manager Modal -->
-  <div id="remove-manager-modal" class="modal">
-    <div class="modal-content">
-      <h2>Remove Manager</h2>
-      <form id="remove-manager-form">
-        <div class="form-group">
-          <label>Manager Address</label>
-          <input type="text" name="managerAddress" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Remove Manager</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('remove-manager-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add Depositor Modal -->
-  <div id="add-depositor-modal" class="modal">
-    <div class="modal-content">
-      <h2>Add Depositor</h2>
-      <form id="add-depositor-form">
-        <div class="form-group">
-          <label>Depositor Address</label>
-          <input type="text" name="depositorAddress" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Depositor</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('add-depositor-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Remove Depositor Modal -->
-  <div id="remove-depositor-modal" class="modal">
-    <div class="modal-content">
-      <h2>Remove Depositor</h2>
-      <form id="remove-depositor-form">
-        <div class="form-group">
-          <label>Depositor Address</label>
-          <input type="text" name="depositorAddress" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Remove Depositor</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('remove-depositor-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Blacklist Address Modal -->
-  <div id="blacklist-address-modal" class="modal">
-    <div class="modal-content">
-      <h2>Blacklist Address</h2>
-      <form id="blacklist-address-form">
-        <div class="form-group">
-          <label>Address to Blacklist</label>
-          <input type="text" name="blacklistAddress" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Blacklist Address</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('blacklist-address-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Unblacklist Address Modal -->
-  <div id="unblacklist-address-modal" class="modal">
-    <div class="modal-content">
-      <h2>Unblacklist Address</h2>
-      <form id="unblacklist-address-form">
-        <div class="form-group">
-          <label>Address to Unblacklist</label>
-          <input type="text" name="unblacklistAddress" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Unblacklist Address</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('unblacklist-address-modal')">Cancel</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Notification Container -->
-  <div id="notification-container"></div>
-
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/web3@1.7.0/dist/web3.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
-  <script>
-    const CONTRACT_ABI = [
+    <script>
+        const vendingMachineABI = [
 	{
 		"inputs": [
 			{
@@ -1977,495 +1699,229 @@ body {
 	}
 ];
 
-    const NETWORKS = {
-      50: {
-        name: 'XDC Mainnet',
-        rpcUrl: 'https://rpc.xinfin.network',
-        contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c',
-        symbol: 'XDC',
-        explorer: 'https://explorer.xinfin.network',
-        decimals: 18,
-        chainParams: {
-          chainId: '0x32',
-          chainName: 'XDC Mainnet',
-          nativeCurrency: { name: 'XDC', symbol: 'XDC', decimals: 18 },
-          rpcUrls: ['https://rpc.xinfin.network'],
-          blockExplorerUrls: ['https://explorer.xinfin.network']
-        }
-      },
-      43114: {
-        name: 'Avalanche C-Chain',
-        rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
-        contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c',
-        symbol: 'AVAX',
-        explorer: 'https://snowtrace.io',
-        decimals: 18,
-        chainParams: {
-          chainId: '0xA86A',
-          chainName: 'Avalanche C-Chain',
-          nativeCurrency: { name: 'AVAX', symbol: 'AVAX', decimals: 18 },
-          rpcUrls: ['https://api.avax.network/ext/bc/C/rpc'],
-          blockExplorerUrls: ['https://snowtrace.io']
-        }
-      },
-      137: {
-        name: 'Polygon Mainnet',
-        rpcUrl: 'https://polygon-rpc.com',
-        contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c',
-        symbol: 'POL',
-        explorer: 'https://polygonscan.com',
-        decimals: 18,
-        chainParams: {
-          chainId: '0x89',
-          chainName: 'Polygon Mainnet',
-          nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
-          rpcUrls: ['https://polygon-rpc.com'],
-          blockExplorerUrls: ['https://polygonscan.com']
-        }
-      }
-    };
+        const networks = {
+            xdc: {
+                name: 'XDC Mainnet',
+                chainId: '0x32',
+                rpcUrl: 'https://rpc.xinfin.network',
+                symbol: 'XDC',
+                explorer: 'https://explorer.xinfin.network',
+                contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c'
+            },
+            avax: {
+                name: 'Avalanche C-Chain',
+                chainId: '0xA86A',
+                rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+                symbol: 'AVAX',
+                explorer: 'https://snowtrace.io',
+                contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c'
+            },
+            polygon: {
+                name: 'Polygon Mainnet',
+                chainId: '0x89',
+                rpcUrl: 'https://polygon-rpc.com',
+                symbol: 'MATIC',
+                explorer: 'https://polygonscan.com',
+                contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c'
+            }
+        };
 
-    let web3;
-    let contract;
-    let currentAccount;
-    let currentChainId;
-    let vaults = [];
-    let beneficiaryAddress;
+        let currentNetwork = null;
+        let web3;
+        let accounts = [];
 
-    async function connectWallet() {
-      if (typeof window.ethereum !== 'undefined') {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          currentAccount = accounts[0];
+        async function connectWallet(networkKey) {
+            const network = networks[networkKey];
+            currentNetwork = network;
 
-          web3 = new Web3(window.ethereum);
+            if (typeof window.ethereum === 'undefined') {
+                showNotification('MetaMask is required.', 'error');
+                return;
+            }
 
-          const chainIdHex = await web3.eth.getChainId();
-          await handleNetworkChange(web3.utils.toHex(chainIdHex));
+            web3 = new Web3(window.ethereum);
+            accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-          window.ethereum.on('accountsChanged', handleAccountChange);
-          window.ethereum.on('chainChanged', handleNetworkChange);
-
-          document.getElementById('connected-address').textContent =
-            `${currentAccount.substr(0,6)}...${currentAccount.substr(-4)}`;
-
-          setupContractEvents();
-
-          showNotification('success', 'Connected', 'Successfully connected to wallet');
-        } catch (error) {
-          console.error('Error connecting to wallet:', error);
-          showNotification('error', 'Connection Failed', formatError(error));
-        }
-      } else {
-        showNotification('error', 'Web3 Not Found', 'Please install MetaMask');
-      }
-    }
-
-    document.getElementById('connect-wallet-btn').addEventListener('click', connectWallet);
-
-    async function handleAccountChange(accounts) {
-      if (accounts.length === 0) {
-        currentAccount = null;
-        document.getElementById('connected-address').textContent = 'Not Connected';
-        showNotification('warning', 'Disconnected', 'Please connect your wallet');
-      } else {
-        currentAccount = accounts[0];
-        document.getElementById('connected-address').textContent =
-          `${currentAccount.substr(0,6)}...${currentAccount.substr(-4)}`;
-        await loadDashboardData();
-      }
-    }
-
-    async function handleNetworkChange(chainIdHex) {
-      const chainId = parseInt(chainIdHex, 16);
-      currentChainId = chainId;
-      const networkConfig = NETWORKS[currentChainId];
-
-      if (!networkConfig) {
-        showNotification('error', 'Network Error', 'Unsupported network. Please switch to a supported network.');
-        document.getElementById('current-network').textContent = `Network: Unsupported (${chainId})`;
-        return;
-      }
-
-      document.getElementById('current-network').textContent = `Network: ${networkConfig.name}`;
-      contract = new web3.eth.Contract(CONTRACT_ABI, networkConfig.contractAddress);
-
-      await loadDashboardData();
-    }
-
-    async function switchNetwork(targetChainId) {
-      try {
-        const networkConfig = NETWORKS[targetChainId];
-        if (!networkConfig) throw new Error('Unsupported network');
-
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: networkConfig.chainParams.chainId }]
-        });
-      } catch (error) {
-        if (error.code === 4902) {
-          try {
-            const networkConfig = NETWORKS[targetChainId];
             await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [networkConfig.chainParams]
-            });
-          } catch (addError) {
-            console.error('Error adding network:', addError);
-            showNotification('error', 'Network Error', 'Failed to add network to MetaMask');
-          }
-        } else {
-          console.error('Error switching network:', error);
-          showNotification('error', 'Network Error', 'Failed to switch network');
-        }
-      }
-    }
-
-    document.getElementById('network-select').addEventListener('change', async (e) => {
-      const targetChainId = parseInt(e.target.value);
-      await switchNetwork(targetChainId);
-    });
-
-    function setupContractEvents() {
-      if (!contract) return;
-
-      const events = [
-        'VaultInitialized',
-        'ProductDeposited',
-        'ProductSold',
-        'ProfitWithdrawn',
-        'UnsharedProfitWithdrawn',
-        'PriceUpdated',
-        'VaultPaused',
-        'VaultUnpaused',
-        'VaultRecalibrated',
-        'AddressBlacklisted',
-        'AddressUnblacklisted',
-        'DepositorAdded',
-        'DepositorRemoved',
-        'Paused',
-        'Unpaused',
-        'ProductNameUpdated',
-        'UnsharedProductWithdrawn',
-        'DirectTokenTransferReceived'
-      ];
-
-      events.forEach(eventName => {
-        contract.events[eventName]({})
-          .on('data', async (event) => {
-            console.log(`${eventName} event:`, event);
-            showNotification('success', eventName, 'Event detected, refreshing data...');
-            await loadDashboardData();
-          })
-          .on('error', error => {
-            console.error(`Error in ${eventName} event:`, error);
-          });
-      });
-    }
-
-    async function loadDashboardData() {
-      try {
-        const vaultCount = await contract.methods.vaultCount().call();
-        let totalDeposits = 0;
-
-        document.getElementById('total-vaults').textContent = vaultCount;
-
-        vaults = [];
-
-        for (let vaultId = 0; vaultId < vaultCount; vaultId++) {
-          const [basicInfo, financialInfo] = await Promise.all([
-            contract.methods.getVaultBasicInfo(vaultId).call(),
-            contract.methods.getVaultFinancialInfo(vaultId).call()
-          ]);
-
-          if (basicInfo.isInitialized) {
-            vaults.push({
-              id: vaultId,
-              productToken: basicInfo.productToken,
-              paymentToken: basicInfo.paymentToken,
-              price: basicInfo.price,
-              productName: basicInfo.productName,
-              isInitialized: basicInfo.isInitialized,
-              isPaused: basicInfo.isPaused,
-              isNativePayment: basicInfo.isNativePayment,
-              totalProduct: financialInfo.totalProduct,
-              totalProfit: financialInfo.totalProfit,
-              unsharedProfit: financialInfo.unsharedProfit,
-              lastPriceUpdate: financialInfo.lastPriceUpdate,
-              totalShares: financialInfo.totalShares,
-              unsharedProduct: financialInfo.unsharedProduct
+                method: 'wallet_addEthereumChain',
+                params: [{
+                    chainId: network.chainId,
+                    chainName: network.name,
+                    nativeCurrency: { name: network.symbol, symbol: network.symbol, decimals: 18 },
+                    rpcUrls: [network.rpcUrl],
+                    blockExplorerUrls: [network.explorer]
+                }]
             });
 
-            totalDeposits += parseInt(financialInfo.totalProduct);
-          }
+            showNotification('Wallet connected!', 'success');
+            await loadProducts();
         }
 
-        document.getElementById('total-deposits').textContent = totalDeposits.toLocaleString();
+        async function loadProducts() {
+            try {
+                const contract = new web3.eth.Contract(vendingMachineABI, currentNetwork.contractAddress);
+                const vaultCount = await contract.methods.vaultCount().call();
+                const productsGrid = document.getElementById('products-grid');
+                productsGrid.innerHTML = '';
 
-        const isPaused = await contract.methods.paused().call();
-        document.getElementById('contract-status').textContent = isPaused ? 'Paused' : 'Active';
-        document.getElementById('toggle-contract-pause-btn').textContent = isPaused ? 'Unpause Contract' : 'Pause Contract';
+                for (let i = 0; i < vaultCount; i++) {
+                    const basicInfo = await contract.methods.getVaultBasicInfo(i).call();
+                    const financialInfo = await contract.methods.getVaultFinancialInfo(i).call();
 
-        const balance = await web3.eth.getBalance(contract.options.address);
-        const formattedBalance = web3.utils.fromWei(balance, 'ether');
-        document.getElementById('contract-balance').textContent =
-          `${parseFloat(formattedBalance).toLocaleString()} ${NETWORKS[currentChainId].symbol}`;
+                    if (!basicInfo.isInitialized || basicInfo.isPaused) continue;
 
-        beneficiaryAddress = await contract.methods.beneficiary().call();
+                    const totalProduct = web3.utils.fromWei(financialInfo.totalProduct, 'ether');
+                    const unsharedProduct = web3.utils.fromWei(financialInfo.unsharedProduct, 'ether');
+                    const availableSupply = parseFloat(totalProduct) + parseFloat(unsharedProduct);
 
-        renderVaults();
+                    const product = {
+                        id: i,
+                        name: basicInfo.productName || `Product ${i}`,
+                        productToken: basicInfo.productToken,
+                        paymentToken: basicInfo.paymentToken,
+                        price: web3.utils.fromWei(basicInfo.price, 'ether'),
+                        availableSupply: availableSupply.toString(),
+                        isNativePayment: basicInfo.isNativePayment
+                    };
 
-        updateAnalytics();
-      } catch (error) {
-        showNotification('error', 'Loading Error', formatError(error));
-      }
-    }
-
-    function renderVaults() {
-      const vaultsList = document.getElementById('vaults-list');
-      vaultsList.innerHTML = '';
-
-      vaults.forEach(vault => {
-        const vaultCard = document.createElement('div');
-        vaultCard.className = 'vault-card';
-
-        const availableSupply = parseInt(vault.totalProduct) + parseInt(vault.unsharedProduct);
-        const pricePerUnit = web3.utils.fromWei(vault.price, 'ether');
-        const totalProfit = web3.utils.fromWei(vault.totalProfit, 'ether');
-        const unsharedProfit = web3.utils.fromWei(vault.unsharedProfit, 'ether');
-
-        vaultCard.innerHTML = `
-          <div class="vault-header">
-            <h3>Vault #${vault.id}</h3>
-            <span class="status-badge ${vault.isPaused ? 'inactive' : 'active'}">
-              ${vault.isPaused ? 'Paused' : 'Active'}
-            </span>
-          </div>
-          <div class="vault-details">
-            <p><strong>Product Name:</strong> ${vault.productName}</p>
-            <p><strong>Available Supply:</strong> ${availableSupply.toLocaleString()}</p>
-            <p><strong>Product Token:</strong> <a href="${NETWORKS[currentChainId].explorer}/address/${vault.productToken}" target="_blank">${vault.productToken.substr(0,6)}...${vault.productToken.substr(-4)}</a></p>
-            <p><strong>Payment Token:</strong> ${vault.isNativePayment ? 'Native Token' : `<a href="${NETWORKS[currentChainId].explorer}/address/${vault.paymentToken}" target="_blank">${vault.paymentToken.substr(0,6)}...${vault.paymentToken.substr(-4)}</a>`}</p>
-            <p><strong>Price per Unit:</strong> ${parseFloat(pricePerUnit).toLocaleString()} ${vault.isNativePayment ? NETWORKS[currentChainId].symbol : 'ERC20'}</p>
-            <p><strong>Total Product:</strong> ${parseInt(vault.totalProduct).toLocaleString()}</p>
-            <p><strong>Unshared Product:</strong> ${parseInt(vault.unsharedProduct).toLocaleString()}</p>
-            <p><strong>Total Shares:</strong> ${parseInt(vault.totalShares).toLocaleString()}</p>
-            <p><strong>Total Profit:</strong> ${parseFloat(totalProfit).toLocaleString()}</p>
-            <p><strong>Unshared Profit:</strong> ${parseFloat(unsharedProfit).toLocaleString()}</p>
-          </div>
-          <div class="vault-actions">
-            <button class="btn btn-primary btn-sm" onclick="showUpdatePriceModal(${vault.id})">
-              <i class="fas fa-edit"></i> Update Price
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="showUpdateProductNameModal(${vault.id})">
-              <i class="fas fa-edit"></i> Update Product Name
-            </button>
-            <button class="btn btn-primary btn-sm" onclick="showDepositProductModal(${vault.id})">
-              <i class="fas fa-box"></i> Deposit Product
-            </button>
-            <button class="btn ${vault.isPaused ? 'btn-success' : 'btn-warning'} btn-sm" onclick="toggleVaultState(${vault.id})">
-              ${vault.isPaused ? '<i class="fas fa-play"></i> Unpause' : '<i class="fas fa-pause"></i> Pause'}
-            </button>
-            <button class="btn btn-info btn-sm" onclick="recalibrateVault(${vault.id})">
-              <i class="fas fa-sync-alt"></i> Recalibrate
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="withdrawUnsharedProfit(${vault.id})">
-              <i class="fas fa-hand-holding-usd"></i> Withdraw Unshared Profit
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="withdrawUnsharedProduct(${vault.id})">
-              <i class="fas fa-box-open"></i> Withdraw Unshared Product
-            </button>
-            <button class="btn btn-success btn-sm" onclick="showBuyProductModal(${vault.id})" ${availableSupply === 0 ? 'disabled' : ''}>
-              <i class="fas fa-shopping-cart"></i> Buy Product
-            </button>
-          </div>
-        `;
-
-        vaultsList.appendChild(vaultCard);
-      });
-    }
-
-    function showBuyProductModal(vaultId) {
-      const form = document.getElementById('buy-product-form');
-      form.reset();
-      form.elements['vaultId'].value = vaultId;
-      const vault = vaults.find(v => v.id === vaultId);
-      const pricePerUnit = web3.utils.fromWei(vault.price, 'ether');
-      document.getElementById('buy-product-price').textContent = `Price per Unit: ${parseFloat(pricePerUnit).toLocaleString()} ${vault.isNativePayment ? NETWORKS[currentChainId].symbol : 'ERC20'}`;
-      showModal('buy-product-modal');
-    }
-
-    document.getElementById('buy-product-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const vaultId = formData.get('vaultId');
-      const amount = formData.get('amount');
-      const vault = vaults.find(v => v.id === parseInt(vaultId));
-
-      if (!vault) {
-        showNotification('error', 'Error', 'Vault not found');
-        return;
-      }
-
-      const availableSupply = parseInt(vault.totalProduct) + parseInt(vault.unsharedProduct);
-      if (amount > availableSupply) {
-        showNotification('error', 'Error', 'Amount exceeds available supply');
-        return;
-      }
-
-      const cost = web3.utils.toBN(vault.price).mul(web3.utils.toBN(amount));
-
-      try {
-        if (vault.isNativePayment) {
-          await contract.methods.buyProduct(vaultId, amount).send({ from: currentAccount, value: cost.toString() });
-        } else {
-          const paymentTokenAbi = [{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"type":"function"}];
-          const paymentToken = new web3.eth.Contract(paymentTokenAbi, vault.paymentToken);
-          const allowance = await paymentToken.methods.allowance(currentAccount, contract.options.address).call();
-          if (web3.utils.toBN(allowance).lt(cost)) {
-            await paymentToken.methods.approve(contract.options.address, cost.toString()).send({ from: currentAccount });
-          }
-          await contract.methods.buyProduct(vaultId, amount).send({ from: currentAccount });
-        }
-        closeModal('buy-product-modal');
-        showNotification('success', 'Success', 'Product purchased successfully');
-        await loadDashboardData();
-      } catch (error) {
-        showNotification('error', 'Error', formatError(error));
-      }
-    });
-
-    // ... [Rest of your existing JavaScript code remains unchanged]
-
-    function showModal(modalId) {
-      const modal = document.getElementById(modalId);
-      modal.classList.add('show');
-    }
-
-    function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      modal.classList.remove('show');
-    }
-
-    function showNotification(type, title, message) {
-      const notificationContainer = document.getElementById('notification-container');
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <div class="notification-content">
-          <div class="notification-title">${title}</div>
-          <div class="notification-message">${message}</div>
-        </div>
-        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
-      `;
-
-      notificationContainer.appendChild(notification);
-      setTimeout(() => {
-        notification.remove();
-      }, 5000);
-    }
-
-    function formatError(error) {
-      if (typeof error === 'string') return error;
-      if (error.message) return error.message;
-      return JSON.stringify(error);
-    }
-
-    function updateAnalytics() {
-      if (!vaults.length) return;
-
-      const vaultsChartCtx = document.getElementById('vaults-chart').getContext('2d');
-
-      if (window.vaultsChart) window.vaultsChart.destroy();
-
-      const chartData = vaults.map(v => ({
-        id: v.id,
-        totalProfit: parseFloat(web3.utils.fromWei(v.totalProfit, 'ether')),
-        totalProduct: parseInt(v.totalProduct),
-        totalShares: parseInt(v.totalShares)
-      }));
-
-      window.vaultsChart = new Chart(vaultsChartCtx, {
-        type: 'bar',
-        data: {
-          labels: chartData.map(d => `Vault ${d.id}`),
-          datasets: [{
-            label: 'Total Profit',
-            data: chartData.map(d => d.totalProfit),
-            backgroundColor: 'rgba(54, 162, 235, 0.7)'
-          }, {
-            label: 'Total Product',
-            data: chartData.map(d => d.totalProduct),
-            backgroundColor: 'rgba(75, 192, 192, 0.7)'
-          }, {
-            label: 'Total Shares',
-            data: chartData.map(d => d.totalShares),
-            backgroundColor: 'rgba(255, 206, 86, 0.7)'
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Vaults Analytics'
+                    addProductToUI(product);
+                }
+            } catch (error) {
+                showNotification(`Error loading products: ${error.message}`, 'error');
             }
-          },
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
         }
-      });
-    }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      if (typeof window.ethereum !== 'undefined') {
-        web3 = new Web3(window.ethereum);
-        web3.eth.getAccounts().then(accounts => {
-          if (accounts.length > 0) {
-            currentAccount = accounts[0];
-            document.getElementById('connected-address').textContent =
-              `${currentAccount.substr(0,6)}...${currentAccount.substr(-4)}`;
-            web3.eth.getChainId().then(chainId => {
-              handleNetworkChange(web3.utils.toHex(chainId));
+        function addProductToUI(product) {
+            const productsGrid = document.getElementById('products-grid');
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+
+            productCard.innerHTML = `
+                <div class="product-info">
+                    <h2>${product.name}</h2>
+                    <p>Price: ${product.price} ${currentNetwork.symbol}</p>
+                    <p>Available: ${product.availableSupply}</p>
+                    <input type="number" min="1" max="${product.availableSupply}" value="1" class="amount-input" data-product-id="${product.id}">
+                </div>
+                <button class="buy-btn" data-product-id="${product.id}">Buy Now</button>
+            `;
+
+            productsGrid.appendChild(productCard);
+
+            productCard.querySelector('.buy-btn').addEventListener('click', () => {
+                const amountInput = productCard.querySelector('.amount-input');
+                const amount = parseFloat(amountInput.value);
+                if (isNaN(amount) || amount <= 0) {
+                    showNotification('Please enter a valid amount.', 'error');
+                    return;
+                }
+                if (amount > parseFloat(product.availableSupply)) {
+                    showNotification('Amount exceeds available supply.', 'error');
+                    return;
+                }
+                completePurchaseFlow(product.id, amount);
             });
-          }
+        }
+
+        async function completePurchaseFlow(vaultId, amount) {
+            try {
+                const contract = new web3.eth.Contract(vendingMachineABI, currentNetwork.contractAddress);
+                const basicInfo = await contract.methods.getVaultBasicInfo(vaultId).call();
+                const pricePerUnit = basicInfo.price; // In Wei
+                const totalCost = web3.utils.toBN(pricePerUnit).mul(web3.utils.toBN(web3.utils.toWei(amount.toString(), 'ether'))).div(web3.utils.toBN(web3.utils.toWei('1', 'ether')));
+
+                const isNativePayment = basicInfo.isNativePayment;
+
+                const buyProductMethod = contract.methods.buyProduct(vaultId, web3.utils.toWei(amount.toString(), 'ether'));
+
+                const txOptions = {
+                    from: accounts[0],
+                    value: isNativePayment ? totalCost.toString() : '0'
+                };
+
+                if (!isNativePayment) {
+                    const paymentTokenAddress = basicInfo.paymentToken;
+                    const paymentTokenContract = new web3.eth.Contract([{
+                        "constant": false,
+                        "inputs": [
+                            { "name": "_spender", "type": "address" },
+                            { "name": "_value", "type": "uint256" }
+                        ],
+                        "name": "approve",
+                        "outputs": [{ "name": "success", "type": "bool" }],
+                        "type": "function"
+                    }], paymentTokenAddress);
+
+                    // Approve the contract to spend the payment tokens
+                    await paymentTokenContract.methods.approve(currentNetwork.contractAddress, totalCost.toString()).send({ from: accounts[0] });
+                }
+
+                await buyProductMethod.send(txOptions);
+
+                showNotification('Purchase successful!', 'success');
+                await loadProducts();
+            } catch (error) {
+                showNotification(`Purchase failed: ${error.message}`, 'error');
+            }
+        }
+
+        function showNotification(message, type) {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        document.querySelectorAll('.network-btn').forEach(button => {
+            button.addEventListener('click', () => connectWallet(button.dataset.network));
         });
 
-        window.ethereum.on('accountsChanged', handleAccountChange);
-        window.ethereum.on('chainChanged', handleNetworkChange);
-      } else {
-        console.warn('MetaMask is not installed');
-      }
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', async () => {
+                accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                await loadProducts();
+            });
 
-      // Navigation
-      const navLinks = document.querySelectorAll('.nav-link');
-      navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const section = link.getAttribute('data-section');
-          document.getElementById('dashboard-section').style.display = 'none';
-          document.getElementById('admin-section').style.display = 'none';
-          if (section === 'dashboard') {
-            document.getElementById('dashboard-section').style.display = 'block';
-          } else if (section === 'admin') {
-            document.getElementById('admin-section').style.display = 'block';
-          }
-          navLinks.forEach(l => l.classList.remove('active'));
-          link.classList.add('active');
-        });
-      });
-    });
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+        }
+    </script>
 
-    // Close modal when clicking outside of it
-    window.addEventListener('click', (e) => {
-      if (e.target.classList.contains('modal')) {
-        closeModal(e.target.id);
-      }
-    });
-
-  </script>
+    <style>
+        /* Add your styles here */
+        .product-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .product-info {
+            margin-bottom: 10px;
+        }
+        .amount-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .buy-btn {
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .buy-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
 </body>
 </html>
