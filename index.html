@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CIFI Cross-Chain Vending Machine</title>
+    <!-- Include Web3.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+    <style>
+        /* Styles for the vending machine */
+        .container {
+            display: flex;
+            font-family: Arial, sans-serif;
+        }
+        .sidebar {
+            width: 250px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .header h1 {
+            margin-top: 0;
+        }
+        .network-btn {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .network-btn:hover {
+            background-color: #0056b3;
+        }
+        .logo-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .logo {
+            max-width: 100%;
+            height: auto;
+        }
+        .product-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .product-info {
+            margin-bottom: 10px;
+        }
+        .amount-input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .buy-btn {
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .buy-btn:hover {
+            background-color: #45a049;
+        }
+        .custom-toast {
+            opacity: 1;
+            transition: opacity 0.3s;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div id="wallet-status">Wallet not connected</div>
+            <button class="network-btn" data-network="xdc">XDC Network</button>
+            <button class="network-btn" data-network="avax">Avalanche</button>
+            <button class="network-btn" data-network="polygon">Polygon</button>
+            <div class="logo-container">
+                <img src="https://ipfs.io/ipfs/QmQX4HvtqdYVuJHm17JTyGkK1ttFitg4oAhPzXdy6psm1T" alt="Logo" class="logo">
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>CIFI Cross-Chain Vending Machine</h1>
+                <p>
+                    Purchase tokens across multiple networks seamlessly. Connect your wallet by selecting a network from the sidebar.
+                </p>
+            </div>
+
+            <div id="products-grid" class="products-grid">
+                <!-- Products will be dynamically populated here -->
+            </div>
+
+            <div class="toast-container" id="toast-container">
+                <!-- Notifications will be shown here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const vendingMachineABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "initialOwner",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_beneficiary",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"inputs": [],
+		"name": "FailedCall",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "balance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "needed",
+				"type": "uint256"
+			}
+		],
+		"name": "InsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			}
+		],
+		"name": "OwnableInvalidOwner",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "OwnableUnauthorizedAccount",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "token",
+				"type": "address"
+			}
+		],
+		"name": "SafeERC20FailedOperation",
+		"type": "error"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "AddressBlacklisted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "AddressUnblacklisted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "DepositorAdded",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "DepositorRemoved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "token",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isUnsharedProduct",
+				"type": "bool"
+			}
+		],
+		"name": "DirectTokenTransferReceived",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "depositor",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "productToken",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "EmergencyWithdrawal",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "Paused",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newPrice",
+				"type": "uint256"
+			}
+		],
+		"name": "PriceUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "depositor",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "productToken",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "shares",
+				"type": "uint256"
+			}
+		],
+		"name": "ProductDeposited",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "newProductName",
+				"type": "string"
+			}
+		],
+		"name": "ProductNameUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "productToken",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "cost",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isNativePayment",
+				"type": "bool"
+			}
+		],
+		"name": "ProductSold",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "depositor",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isNativePayment",
+				"type": "bool"
+			}
+		],
+		"name": "ProfitWithdrawn",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "Unpaused",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "token",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "UnregisteredTokenReturned",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "UnsharedProductWithdrawn",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "beneficiary",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isNativePayment",
+				"type": "bool"
+			}
+		],
+		"name": "UnsharedProfitWithdrawn",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "productToken",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "paymentToken",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "initialPrice",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "productName",
+				"type": "string"
+			}
+		],
+		"name": "VaultInitialized",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "VaultPaused",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newUnsharedProduct",
+				"type": "uint256"
+			}
+		],
+		"name": "VaultRecalibrated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isPaused",
+				"type": "bool"
+			}
+		],
+		"name": "VaultStateChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "VaultUnpaused",
+		"type": "event"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "fallback"
+	},
+	{
+		"inputs": [],
+		"name": "MAX_DEPOSIT",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "MIN_DEPOSIT",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "addDepositor",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "addManager",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "beneficiary",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "blacklistAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "blacklisted",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "buyProduct",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "depositProduct",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "depositors",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "emergencyWithdraw",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "depositor",
+				"type": "address"
+			}
+		],
+		"name": "getDepositorInfo",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "depositBalance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "shareBalance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "profitDebt",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "token",
+				"type": "address"
+			}
+		],
+		"name": "getTokenVaultId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "getVaultAnalytics",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "totalShares",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalValueLocked",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "profitPerShare",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "unsharedValueLocked",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalUnsharedProfit",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "getVaultBalances",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "productBalance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "paymentBalance",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "nativeBalance",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "getVaultBasicInfo",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "productToken",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "paymentToken",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "productName",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "isInitialized",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "isPaused",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "isNativePayment",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "getVaultFinancialInfo",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "totalProduct",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalProfit",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalShares",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "unsharedProduct",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "unsharedProfit",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastPriceUpdate",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "getVaultTokens",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "productToken",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "paymentToken",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "shareToken",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "productToken",
+				"type": "address"
+			},
+			{
+				"internalType": "contract IERC20",
+				"name": "paymentToken",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "initialPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "productName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "shareName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "shareSymbol",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "isNativePayment",
+				"type": "bool"
+			}
+		],
+		"name": "initializeVault",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "isNativePaymentVault",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "managers",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"name": "onERC20Received",
+		"outputs": [
+			{
+				"internalType": "bytes4",
+				"name": "",
+				"type": "bytes4"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "pause",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "pauseVault",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paused",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "contract IERC20",
+				"name": "token",
+				"type": "address"
+			}
+		],
+		"name": "recalibrateVault",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "removeDepositor",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "removeManager",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "tokenToVaultId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "unblacklistAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "unpause",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "unpauseVault",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "newPrice",
+				"type": "uint256"
+			}
+		],
+		"name": "updatePrice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "newProductName",
+				"type": "string"
+			}
+		],
+		"name": "updateProductName",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "vaultCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawProfit",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawUnsharedProduct",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "vaultId",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawUnsharedProfit",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	}
+];
+
+        const networks = {
+            xdc: {
+                name: 'XDC Mainnet',
+                chainId: '0x32',
+                rpcUrl: 'https://rpc.xinfin.network',
+                symbol: 'XDC',
+                explorer: 'https://explorer.xinfin.network',
+                contractAddress: '0xd5208d783A9E2d592eB56a70B77599c7398572EC'
+            },
+            avax: {
+                name: 'Avalanche C-Chain',
+                chainId: '0xA86A',
+                rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+                symbol: 'AVAX',
+                explorer: 'https://snowtrace.io',
+                contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c'
+            },
+            polygon: {
+                name: 'Polygon Mainnet',
+                chainId: '0x89',
+                rpcUrl: 'https://polygon-rpc.com',
+                symbol: 'MATIC',
+                explorer: 'https://polygonscan.com',
+                contractAddress: '0x52e0b31b75C6750671Cb64400C52B7aE43b4b39c'
+            }
+        };
+
+        let currentNetwork = null;
+        let web3;
+        let accounts = [];
+
+        async function connectWallet(networkKey) {
+            const network = networks[networkKey];
+            currentNetwork = network;
+
+            if (typeof window.ethereum === 'undefined') {
+                showNotification('MetaMask is required.', 'error');
+                return;
+            }
+
+            web3 = new Web3(window.ethereum);
+            accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+            await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                    chainId: network.chainId,
+                    chainName: network.name,
+                    nativeCurrency: { name: network.symbol, symbol: network.symbol, decimals: 18 },
+                    rpcUrls: [network.rpcUrl],
+                    blockExplorerUrls: [network.explorer]
+                }]
+            });
+
+            showNotification('Wallet connected!', 'success');
+            await loadProducts();
+        }
+
+        async function loadProducts() {
+            try {
+                const contract = new web3.eth.Contract(vendingMachineABI, currentNetwork.contractAddress);
+                const vaultCount = await contract.methods.vaultCount().call();
+                const productsGrid = document.getElementById('products-grid');
+                productsGrid.innerHTML = '';
+
+                for (let i = 0; i < vaultCount; i++) {
+                    const basicInfo = await contract.methods.getVaultBasicInfo(i).call();
+                    const financialInfo = await contract.methods.getVaultFinancialInfo(i).call();
+
+                    if (!basicInfo.isInitialized || basicInfo.isPaused) continue;
+
+                    const totalProduct = web3.utils.fromWei(financialInfo.totalProduct, 'ether');
+                    const unsharedProduct = web3.utils.fromWei(financialInfo.unsharedProduct, 'ether');
+                    const availableSupply = parseFloat(totalProduct) + parseFloat(unsharedProduct);
+
+                    const priceInEther = web3.utils.fromWei(basicInfo.price, 'ether');
+                    const price = parseFloat(priceInEther);
+
+                    const product = {
+                        id: i,
+                        name: basicInfo.productName || `Product ${i}`,
+                        productToken: basicInfo.productToken,
+                        paymentToken: basicInfo.paymentToken,
+                        priceWei: basicInfo.price,
+                        price: price, // Price in Ether as a decimal number
+                        availableSupply: availableSupply.toString(),
+                        isNativePayment: basicInfo.isNativePayment
+                    };
+
+                    addProductToUI(product);
+                }
+            } catch (error) {
+                showNotification(`Error loading products: ${error.message}`, 'error');
+            }
+        }
+
+        function addProductToUI(product) {
+            const productsGrid = document.getElementById('products-grid');
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+
+            productCard.innerHTML = `
+                <div class="product-info">
+                    <h2>${product.name}</h2>
+                    <p>Price per unit: ${product.price} ${currentNetwork.symbol}</p>
+                    <p>Available: ${product.availableSupply}</p>
+                    <input type="number" min="1" max="${product.availableSupply}" value="1" class="amount-input" data-product-id="${product.id}">
+                    <p>Total Price: <span class="total-price">${product.price}</span> ${currentNetwork.symbol}</p>
+                </div>
+                <button class="buy-btn" data-product-id="${product.id}">Buy Now</button>
+            `;
+
+            productsGrid.appendChild(productCard);
+
+            const amountInput = productCard.querySelector('.amount-input');
+            const totalPriceElement = productCard.querySelector('.total-price');
+
+            function updateTotalPrice() {
+                const amount = parseFloat(amountInput.value) || 0;
+                const totalPrice = amount * product.price;
+                totalPriceElement.textContent = totalPrice.toFixed(4);
+            }
+
+            amountInput.addEventListener('input', updateTotalPrice);
+
+            productCard.querySelector('.buy-btn').addEventListener('click', () => {
+                const amount = parseFloat(amountInput.value) || 0;
+                if (isNaN(amount) || amount <= 0) {
+                    showNotification('Please enter a valid amount.', 'error');
+                    return;
+                }
+                if (amount > parseFloat(product.availableSupply)) {
+                    showNotification('Amount exceeds available supply.', 'error');
+                    return;
+                }
+                completePurchaseFlow(product.id, amount);
+            });
+
+            // Initialize total price
+            updateTotalPrice();
+        }
+
+        async function completePurchaseFlow(vaultId, amount) {
+            try {
+                const contract = new web3.eth.Contract(vendingMachineABI, currentNetwork.contractAddress);
+                const basicInfo = await contract.methods.getVaultBasicInfo(vaultId).call();
+                const pricePerUnitWei = basicInfo.price; // Price per unit in Wei
+
+                const totalCostWei = web3.utils.toBN(pricePerUnitWei).mul(web3.utils.toBN(web3.utils.toWei(amount.toString(), 'ether'))).div(web3.utils.toBN(web3.utils.toWei('1', 'ether')));
+
+                const isNativePayment = basicInfo.isNativePayment;
+
+                const buyProductMethod = contract.methods.buyProduct(vaultId, web3.utils.toWei(amount.toString(), 'ether'));
+
+                const txOptions = {
+                    from: accounts[0],
+                    value: isNativePayment ? totalCostWei.toString() : '0'
+                };
+
+                if (!isNativePayment) {
+                    const paymentTokenAddress = basicInfo.paymentToken;
+                    const paymentTokenContract = new web3.eth.Contract([{
+                        "constant": false,
+                        "inputs": [
+                            { "name": "_spender", "type": "address" },
+                            { "name": "_value", "type": "uint256" }
+                        ],
+                        "name": "approve",
+                        "outputs": [{ "name": "success", "type": "bool" }],
+                        "type": "function"
+                    }], paymentTokenAddress);
+
+                    // Approve the contract to spend the payment tokens
+                    await paymentTokenContract.methods.approve(currentNetwork.contractAddress, totalCostWei.toString()).send({ from: accounts[0] });
+                }
+
+                await buyProductMethod.send(txOptions);
+
+                showNotification('Purchase successful!', 'success');
+                await loadProducts();
+            } catch (error) {
+                showNotification(`Purchase failed: ${error.message}`, 'error');
+            }
+        }
+
+        function showNotification(message, type) {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        document.querySelectorAll('.network-btn').forEach(button => {
+            button.addEventListener('click', () => connectWallet(button.dataset.network));
+        });
+
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', async () => {
+                accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                await loadProducts();
+            });
+
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
